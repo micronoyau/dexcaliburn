@@ -19,6 +19,7 @@ Java.perform(function () {
 
     init.implementation = function (dexPath, classLoader) {
         console.log("Loaded " + dexPath);
+        console.log("LOADING" + dexPath + "END");
 
         var readStream = createReadStream(dexPath)
         var dex_content = ""

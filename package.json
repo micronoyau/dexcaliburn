@@ -6,10 +6,10 @@
   "main": "agent/index.ts",
   "scripts": {
     "prepare": "npm run build",
-    "origin": "frida -U -l _script.js -f \"com.example.origin\"",
-    "utdyn": "frida -U -l _script.js -f \"com.example.ut_dyn_load\"",
-    "build": "frida-compile scripts/index.ts -o _script.js -c",
-    "watch": "frida-compile scripts/index.ts -o _script.js -w"
+    "origin": "frida -U -l out/_script.js -f \"com.example.origin\"",
+    "utdyn": "frida -U -l out/_script.js -f \"com.example.ut_dyn_load\"",
+    "build": "frida-compile scripts/index.ts -o out/_script.js -c",
+    "watch": "frida-compile scripts/index.ts -o out/_script.js -w"
   },
   "devDependencies": {
     "@types/frida-gum": "^18.1.0",

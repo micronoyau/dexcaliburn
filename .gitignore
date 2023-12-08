@@ -1,2 +1,5 @@
 /_agent.js
 /node_modules
+/dex-files
+/out
+__pycache__
