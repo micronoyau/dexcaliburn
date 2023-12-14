@@ -3,6 +3,7 @@ import { createReadStream, createWriteStream } from "./frida-fs.js";
 import { Buffer } from "buffer";
 
 Java.perform(function () {
+/* 
     var initialClasses = []
 
     Java.enumerateLoadedClasses({
@@ -13,13 +14,16 @@ Java.perform(function () {
             console.log("Loaded initial classes");
         }
     });
-
+ */
+    
+    console.log(Object.getOwnPropertyNames(Process));
+    // Process.getCurrentDir()
+/* 
     const PathClassLoader = Java.use('dalvik.system.PathClassLoader');
     const init = PathClassLoader.$init.overload('java.lang.String', 'java.lang.ClassLoader');
 
     init.implementation = function (dexPath, classLoader) {
-        console.log("Loaded " + dexPath);
-        console.log("LOADING" + dexPath + "END");
+        log("Loading " + dexPath);
 
         var readStream = createReadStream(dexPath)
         var dex_content = ""
@@ -33,14 +37,15 @@ Java.perform(function () {
             })
             .on('end', function () {
                 const buf = Buffer.from(dex_content);
-                const writeStream = createWriteStream('/data/user/0/com.example.ut_dyn_load/test.dex');
+                const writeStream = createWriteStream('/data/user/0/???');
                 writeStream.write(buf);
                 writeStream.end();
 
-                log("Saved dex file :)");
+                log("LOADED" + ... + "END");
             });
 
         return init.call(this, dexPath, classLoader);
     }
+ */
 })
 

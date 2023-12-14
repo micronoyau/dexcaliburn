@@ -1,9 +1,9 @@
 {
-  "name": "frida-agent-example",
+  "name": "dexcaliburn-frida-agent",
   "version": "1.0.0",
-  "description": "Example Frida agent written in TypeScript",
+  "description": "Extract dynamically loaded classes",
   "private": true,
-  "main": "agent/index.ts",
+  "main": "scripts/index.ts",
   "scripts": {
     "prepare": "npm run build",
     "origin": "frida -U -l out/_script.js -f \"com.example.origin\"",
