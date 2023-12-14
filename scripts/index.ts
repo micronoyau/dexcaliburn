@@ -2,8 +2,21 @@ import { log } from "./logger.js";
 import { createReadStream, createWriteStream } from "./frida-fs.js";
 import { Buffer } from "buffer";
 
+
+function makeid(length: number) {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      counter += 1;
+    }
+    return result;
+}
+
+
 Java.perform(function () {
-/* 
     var initialClasses = []
 
     Java.enumerateLoadedClasses({
@@ -11,14 +24,10 @@ Java.perform(function () {
             initialClasses.push(className);
         },
         onComplete: function () {
-            console.log("Loaded initial classes");
+            log("Loaded initial classes");
         }
     });
- */
-    
-    console.log(Object.getOwnPropertyNames(Process));
-    // Process.getCurrentDir()
-/* 
+
     const PathClassLoader = Java.use('dalvik.system.PathClassLoader');
     const init = PathClassLoader.$init.overload('java.lang.String', 'java.lang.ClassLoader');
 
@@ -36,16 +45,22 @@ Java.perform(function () {
                 }
             })
             .on('end', function () {
+                const ActivityThread = Java.use('android.app.ActivityThread');
+                log(String(ActivityThread));
+                const currentApplication = ActivityThread.currentApplication();
+                const context = currentApplication.getApplicationContext();
+                const appPath = context.getDataDir().getAbsolutePath();
+                const filePath = appPath + "/" + makeid(10) + ".dex";
+
                 const buf = Buffer.from(dex_content);
-                const writeStream = createWriteStream('/data/user/0/???');
+                const writeStream = createWriteStream(filePath);
                 writeStream.write(buf);
                 writeStream.end();
 
-                log("LOADED" + ... + "END");
+                log("LOADED" + filePath + "END");
             });
 
         return init.call(this, dexPath, classLoader);
     }
- */
 })
 
