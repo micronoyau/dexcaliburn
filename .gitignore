@@ -3,3 +3,4 @@
 /dex-files/*
 /out/*
 __pycache__
+*.swp
