@@ -1,5 +1,5 @@
 import { log } from "./logger.js";
-import { createReadStream, createWriteStream } from "./frida-fs.js";
+import { createReadStream, createWriteStream, readFileSync, writeFileSync } from "./frida-fs.js";
 import { Buffer } from "buffer";
 
 
@@ -9,15 +9,16 @@ function makeid(length: number) {
     const charactersLength = characters.length;
     let counter = 0;
     while (counter < length) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-      counter += 1;
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        counter += 1;
     }
     return result;
 }
 
 
+var initialClasses: string[] = []
 Java.perform(function () {
-    var initialClasses = []
+
 
     Java.enumerateLoadedClasses({
         onMatch: function (className) {
@@ -25,6 +26,7 @@ Java.perform(function () {
         },
         onComplete: function () {
             log("Loaded initial classes");
+            log(initialClasses.join("\n"));
         }
     });
 
@@ -33,34 +35,39 @@ Java.perform(function () {
 
     init.implementation = function (dexPath, classLoader) {
         log("Loading " + dexPath);
+        log("Using " + String(classLoader));
+        console.log(dexPath);
 
-        var readStream = createReadStream(dexPath)
-        var dex_content = ""
-
-        readStream
-            .on('readable', function () {
-                var chunk;
-                while (null !== (chunk = readStream.read())) {
-                    dex_content = dex_content.concat(chunk);
-                }
-            })
-            .on('end', function () {
-                const ActivityThread = Java.use('android.app.ActivityThread');
-                log(String(ActivityThread));
-                const currentApplication = ActivityThread.currentApplication();
-                const context = currentApplication.getApplicationContext();
-                const appPath = context.getDataDir().getAbsolutePath();
-                const filePath = appPath + "/" + makeid(10) + ".dex";
-
-                const buf = Buffer.from(dex_content);
-                const writeStream = createWriteStream(filePath);
-                writeStream.write(buf);
-                writeStream.end();
-
-                log("LOADED" + filePath + "END");
-            });
+        var cont = readFileSync(dexPath);
+        const ActivityThread = Java.use('android.app.ActivityThread');
+        const currentApplication = ActivityThread.currentApplication();
+        const context = currentApplication.getApplicationContext();
+        const appPath = context.getDataDir().getAbsolutePath();
+        const filePath = appPath + "/" + makeid(10) + ".dex";
+        writeFileSync(filePath, cont);
+        log("LOADEDDEXFILE" + filePath + "ENDDEXFILE");
 
         return init.call(this, dexPath, classLoader);
     }
+
+    const loadClasser = PathClassLoader.loadClass.overload('java.lang.String');
+
+    loadClasser.implementation = function (loadedClassName: string) {
+        log("LOADING " + loadedClassName);
+        log("CLASS" + loadedClassName + "ENDCLASS");
+        var loadedClass = Java.use(loadedClassName);
+        log(String(loadedClass));
+        if (initialClasses.indexOf(loadedClassName) == -1) {
+            log(loadedClassName);
+            var allClasses = Object.getOwnPropertyNames(loadedClass.__proto__).filter((m => !m.startsWith('$')));
+            for (var i in allClasses) {
+                log("METHOD" + loadedClassName + "|" + allClasses[i] + "ENDMETHOD");
+            }
+
+        }
+
+        return loadClasser.call(this, loadedClassName);
+    }
+
 })
 
