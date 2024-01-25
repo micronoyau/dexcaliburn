@@ -68,6 +68,24 @@ Java.perform(function () {
 
         return loadClasser.call(this, loadedClassName);
     }
+   
+    const invoke = Java.use('java.lang.reflect.Method').invoke;
+    
+    invoke.implementation = function (obj1: Object, obj2: Object[]) {
+        log("Invoked : " + this.toGenericString());
+        let fullMethodName = this.toGenericString() + " || ";
+        let stktrc = Java.use("android.util.Log").getStackTraceString(Java.use("java.lang.Exception").$new());
+
+        const ActivityThread = Java.use('android.app.ActivityThread');
+        const currentApplication = ActivityThread.currentApplication();
+        const context = currentApplication.getApplicationContext();
+        const appPath = context.getDataDir().getAbsolutePath();
+        const filePath = appPath + "/log-" + makeid(10) + ".txt";
+        writeFileSync(filePath, fullMethodName + stktrc);
+        log("INVOKE" + filePath + "ENDINVOKE");
+
+        return invoke.call(this, obj1, obj2);
+    }
 
 })
 
