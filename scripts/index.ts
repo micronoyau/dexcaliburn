@@ -1,7 +1,4 @@
 import { log } from "./logger.js";
-import { createReadStream, createWriteStream, readFileSync, writeFileSync } from "./frida-fs.js";
-import { Buffer } from "buffer";
-
 
 function makeid(length: number) {
     let result = '';
@@ -15,6 +12,23 @@ function makeid(length: number) {
     return result;
 }
 
+function readFile(input_file: string){
+    // from dexcalibur
+    var fin = Java.use("java.io.FileInputStream").$new(input_file);
+    var content = [];
+    var b=null;
+    var jsBuffer = new Uint8Array(4096);
+    var buffer = Java.array('byte', Array.from(jsBuffer));
+    do{
+        b=fin.read(buffer);
+        if(b != -1) {
+            for(var i =0; i < b; i++) {
+                content.push(buffer[i]);
+            }
+        }
+    }while(b != -1);
+    return content;
+}
 
 var initialClasses: string[] = []
 Java.perform(function () {
@@ -33,19 +47,11 @@ Java.perform(function () {
     const PathClassLoader = Java.use('dalvik.system.PathClassLoader');
     const init = PathClassLoader.$init.overload('java.lang.String', 'java.lang.ClassLoader');
 
-    init.implementation = function (dexPath, classLoader) {
-        log("Loading " + dexPath);
-        log("Using " + String(classLoader));
-        console.log(dexPath);
-
-        var cont = readFileSync(dexPath);
-        const ActivityThread = Java.use('android.app.ActivityThread');
-        const currentApplication = ActivityThread.currentApplication();
-        const context = currentApplication.getApplicationContext();
-        const appPath = context.getDataDir().getAbsolutePath();
-        const filePath = appPath + "/" + makeid(10) + ".dex";
-        writeFileSync(filePath, cont);
-        log("LOADEDDEXFILE" + filePath + "ENDDEXFILE");
+    init.implementation = function (dexPath: string, classLoader) {
+        // log("Loading " + dexPath);
+        // log("Using " + String(classLoader));
+        // console.log(dexPath);
+        send({id:"dex", file: dexPath.split('/').slice(-1)[0] }, readFile(dexPath))
 
         return init.call(this, dexPath, classLoader);
     }
@@ -53,7 +59,6 @@ Java.perform(function () {
     const loadClasser = PathClassLoader.loadClass.overload('java.lang.String');
 
     loadClasser.implementation = function (loadedClassName: string) {
-        log("LOADING " + loadedClassName);
         log("CLASS" + loadedClassName + "ENDCLASS");
         var loadedClass = Java.use(loadedClassName);
         log(String(loadedClass));
