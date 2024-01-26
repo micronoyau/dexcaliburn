@@ -9,6 +9,7 @@
     "origin": "frida -U -l out/_script.js -f \"com.example.origin\"",
     "utdyn": "frida -U -l out/_script.js -f \"com.example.ut_dyn_load\"",
     "build": "frida-compile scripts/index.ts -o out/_script.js -c",
+    "pyserv": "npm run build && python3 python/server.py",
     "watch": "frida-compile scripts/index.ts -o out/_script.js -w"
   },
   "devDependencies": {

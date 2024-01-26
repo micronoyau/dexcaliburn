@@ -1,22 +1,43 @@
-import io
-import subprocess
-import re
+import frida
+import time
 import os
 
-classNameFile = open("dex-files/classNames.txt","w")
-os.system("mkdir -p dex-files")
-proc = subprocess.Popen(["frida", "-U", "-f" "com.example.ut_dyn_load", "-l", "out/_script.js"], stdout=subprocess.PIPE)
+OUTPUT_FOLDER = 'dex-files'
 
-for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
-    pathDexFile = re.search("(?<=LOADEDDEXFILE).*(?=ENDDEXFILE)", line)
-    className = re.search("(?<=CLASS).*(?=ENDCLASS)", line)
-    invokeName = re.search("(?<=INVOKE).*(?=ENDINVOKE)", line)
-    if pathDexFile:
-        os.system("adb pull " + pathDexFile.group(0) + " dex-files/")
-        os.system("adb shell rm " + pathDexFile.group(0))
-    if className:
-        classNameFile.write(className.group(0)+"\n")
-    if invokeName:
-        os.system("adb pull " + invokeName.group(0) + " dex-files/")
-        os.system("adb shell rm " + invokeName.group(0))
+os.system("mkdir -p " + OUTPUT_FOLDER)
+
+def dex_handler(file_name, data):
+    with open(f'{OUTPUT_FOLDER}/{file_name}', 'wb') as f:
+        f.write(data)
+
+def invoke_handler(history, data):
+    for (idx,data) in enumerate(history):
+        with open(f'{OUTPUT_FOLDER}/log-{data["method"]}-{idx}.txt', 'w') as f:
+            f.write(data["trace"])
+
+MESSAGE_TYPES = {
+    "dex": dex_handler,
+    "invoke": invoke_handler,
+}
+
+def my_message_handler(message, data):
+    payload = message["payload"]
+    if message["type"] == "send":
+        id = payload["id"]
+        print(f"Got message of type: {id}")
+        for (type, handler) in MESSAGE_TYPES.items():
+            if(id == type):
+                handler(payload["data"], data)
+                break
+
+
+device = frida.get_usb_device()
+pid = device.spawn(["com.example.ut_dyn_load"])
+session = device.attach(pid)
+with open("out/_script.js") as f:
+    script = session.create_script(f.read())
+script.on("message", my_message_handler)  # register the message handler
+script.load()
+device.resume(pid)
+time.sleep(5)
 

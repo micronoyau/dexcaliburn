@@ -13,12 +13,12 @@ def canonicalize(m: MethodAnalysis):
     ret = ""
     ret += m.access
     ret += m.get_class_name().replace('/', '.')[1:-1]
-    # ret += 
+    # ret +=
     m.full_name
 
 def analyze_log(classes, log_filename):
     with open(log_filename, 'r') as f:
-        c = '.'.join(f.readline().split(' ||')[0].split(' ')[-1].split('(')[0].split('.')[:-1]))
+        c = '.'.join(f.readline().split(' ||')[0].split(' ')[-1].split('(')[0].split('.')[:-1]);
         if c in classes:
             print("Androguard found dynamically-loaded method {} invoked in {}".format(c, log_filename))
 
