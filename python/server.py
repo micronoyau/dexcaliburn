@@ -1,10 +1,10 @@
 import frida
 import time
 import os
-
-OUTPUT_FOLDER = 'dex-files'
+from const import *
 
 os.system("mkdir -p " + OUTPUT_FOLDER)
+os.system("mkdir -p " + OUTPUT_FOLDER + '/' + LOG_FOLDER)
 
 def dex_handler(file_name, data):
     with open(f'{OUTPUT_FOLDER}/{file_name}', 'wb') as f:
@@ -12,7 +12,7 @@ def dex_handler(file_name, data):
 
 def invoke_handler(history, data):
     for (idx,data) in enumerate(history):
-        with open(f'{OUTPUT_FOLDER}/log-{data["method"]}-{idx}.txt', 'w') as f:
+        with open(f'{OUTPUT_FOLDER}/{LOG_FOLDER}/{data["method"]}-{idx}.txt', 'w') as f:
             f.write(data["trace"])
 
 MESSAGE_TYPES = {
