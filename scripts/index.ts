@@ -15,19 +15,25 @@ Java.perform(function () {
 function captureInvokeCalls() {
     const invoke = Java.use('java.lang.reflect.Method').invoke.overload("java.lang.Object", "[Ljava.lang.Object;");
 
-    var invokeHistory: {method: string, trace: string}[] = []
+    var invokeHistory = new Set<string>();
     const debounceSend = debounce(() => {
-        send({id: "invoke", data: invokeHistory})
-        invokeHistory = []
+        let data: {method: string, trace: string}[] = []
+        invokeHistory.forEach((value) => {
+            let arr = value.split('!!')
+            data.push({method: arr[0], trace: arr[1]});
+        });
+        send({id: "invoke", data: data})
+        invokeHistory.clear()
     }, 1000);
 
     invoke.implementation = function (obj1: Object, obj2: Object[]) {
         log2("Invoked : " + this.toGenericString());
         log("Invoked : " + this.getName());
-        let fullMethodName = this.toGenericString() + " || ";
-        let stktrc = Java.use("android.util.Log").getStackTraceString(Java.use("java.lang.Exception").$new());
+        let fullMethodName = this.toGenericString();
+        let stktrc: string = Java.use("android.util.Log").getStackTraceString(Java.use("java.lang.Exception").$new());
+        let call_pos = stktrc.split('\n')[2];
 
-        invokeHistory.push({method: this.getName(), trace: fullMethodName+stktrc})
+        invokeHistory.add(this.getName() + '!!' + fullMethodName+'\n'+call_pos)
         debounceSend()
         return invoke.call(this, obj1, obj2);
     }
