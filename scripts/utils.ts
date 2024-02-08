@@ -33,7 +33,7 @@ export function makeid(length: number) {
     return result;
 }
 
-export function readFile(input_file: string){
+export function readFile(input_file: string) {
     // from dexcalibur
     var fin = Java.use("java.io.FileInputStream").$new(input_file);
     var content = [];
