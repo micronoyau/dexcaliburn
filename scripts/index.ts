@@ -44,22 +44,13 @@ function sendDynLoadedDexFile() {
     overridePathClassLoader();
     overrideDexClassLoader();
     overrideDelegateLastClassLoader();
-    overrideInMemoryClassLoader();
+    overrideInMemoryDexClassLoader();
 }
 
-function overrideInMemoryClassLoader() {
-    const InMemoryClassLoader = Java.use('dalvik.system.InMemoryClassLoader');
+function overrideInMemoryDexClassLoader() {
+    const InMemoryDexClassLoader = Java.use('dalvik.system.InMemoryDexClassLoader');
 
-    var init = InMemoryClassLoader.$init.overload('[LByteBuffer;' , 'java.lang.String', 'java.lang.ClassLoader');
-    init.implementation = function (buffer: any[], _libSearchPath, classLoader) {
-        log("Loading from memory");
-        log("Using " + String(classLoader));
-
-        send({id:"dex", data: 'memory' }, buffer) // May not work as it's a ByteBuffer array
-        return init.call(this, buffer, _libSearchPath, classLoader);
-    }
-
-    init = InMemoryClassLoader.$init.overload('ByteBuffer', 'java.lang.ClassLoader');
+    var init = InMemoryDexClassLoader.$init.overload('java.nio.ByteBuffer', 'java.lang.ClassLoader');
     init.implementation = function (buffer: any[], classLoader) {
         log("Loading from memory");
         log("Using " + String(classLoader));
@@ -68,7 +59,7 @@ function overrideInMemoryClassLoader() {
         return init.call(this, buffer, classLoader);
     }
 
-    init = InMemoryClassLoader.$init.overload('[LByteBuffer;', 'java.lang.ClassLoader');
+    init = InMemoryDexClassLoader.$init.overload('[Ljava.nio.ByteBuffer;', 'java.lang.ClassLoader');
     init.implementation = function (buffer: any[], classLoader) {
         log("Loading from memory");
         log("Using " + String(classLoader));
