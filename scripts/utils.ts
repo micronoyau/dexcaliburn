@@ -1,4 +1,4 @@
-import { writeFileSync } from "./frida-fs.js";
+import { readFileSync2, writeFileSync } from "./frida-fs.js";
 import { LOG_LEVEL } from "./index.js";
 
 export function log(message: string): void {
@@ -34,21 +34,8 @@ export function makeid(length: number) {
 }
 
 export function readFile(input_file: string) {
-    // from dexcalibur
-    var fin = Java.use("java.io.FileInputStream").$new(input_file);
-    var content = [];
-    var b=null;
-    var jsBuffer = new Uint8Array(4096);
-    var buffer = Java.array('byte', Array.from(jsBuffer));
-    do{
-        b=fin.read(buffer);
-        if(b != -1) {
-            for(var i =0; i < b; i++) {
-                content.push(buffer[i]);
-            }
-        }
-    }while(b != -1);
-    return content;
+    var buf = readFileSync2(input_file);
+    return buf ? buf : [];
 }
 
 function legacySend(file_name: string, data: string, regexKey: string) {

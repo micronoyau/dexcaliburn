@@ -280,6 +280,7 @@ class WriteStream extends stream.Writable {
 interface PlatformBackend {
     enumerateDirectoryEntries(path: string, callback: (entry: NativePointer) => void): void;
     readFileSync(path: string, options?: ReadFileOptions): string | Buffer;
+    readFileSync2(path: string): ArrayBuffer | null;
     readlinkSync(path: string): string;
     rmdirSync(path: string): void;
     unlinkSync(path: string): void;
@@ -290,6 +291,10 @@ interface PlatformBackend {
 const windowsBackend: PlatformBackend = {
     enumerateDirectoryEntries(path: string, callback: (entry: NativePointer) => void): void {
         enumerateWindowsDirectoryEntriesMatching(path + "\\*", callback);
+    },
+
+    readFileSync2(path: string): ArrayBuffer | null {
+        return null;
     },
 
     readFileSync(path: string, options: ReadFileOptions = {}): string | Buffer {
@@ -453,6 +458,40 @@ const posixBackend: PlatformBackend = {
         }
     },
 
+    readFileSync2(path: string): ArrayBuffer | null {
+
+        const { open, close, lseek, read } = getPosixApi();
+
+        const openResult = open(Memory.allocUtf8String(path), constants.O_RDONLY, 0);
+        const fd = openResult.value;
+        if (fd === -1)
+            throwPosixError(openResult.errno);
+
+        try {
+            const fileSize = lseek(fd, 0, SEEK_END).valueOf();
+
+            lseek(fd, 0, SEEK_SET);
+
+            const buf = Memory.alloc(fileSize);
+            let readResult, n, readFailed;
+            do {
+                readResult = read(fd, buf, fileSize);
+                n = readResult.value.valueOf();
+                readFailed = n === -1;
+            } while (readFailed && readResult.errno === EINTR);
+
+            if (readFailed)
+                throwPosixError(readResult.errno);
+
+            if (n !== fileSize.valueOf())
+                throw new Error("Short read");
+
+            return buf.readByteArray(fileSize);
+        } finally {
+            close(fd);
+        }
+    },
+
     readFileSync(path: string, options: ReadFileOptions = {}): string | Buffer {
         if (typeof options === "string")
             options = { encoding: options };
@@ -581,6 +620,7 @@ const backend: PlatformBackend = isWindows ? windowsBackend : posixBackend;
 const {
     enumerateDirectoryEntries,
     readFileSync,
+    readFileSync2,
     readlinkSync,
     rmdirSync,
     unlinkSync,
@@ -1355,6 +1395,7 @@ export {
     readdirSync,
     list,
     readFileSync,
+    readFileSync2,
     writeFileSync,
     readlinkSync,
     rmdirSync,
