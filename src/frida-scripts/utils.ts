@@ -1,4 +1,4 @@
-import { writeFileSync } from "./frida-fs.js";
+import { readFileSync2, writeFileSync } from "./frida-fs.js";
 import { LOG_LEVEL } from "./index.js";
 
 export function log(message: string): void {
@@ -21,22 +21,29 @@ export function debounce(func: any, timeout = 300){
   };
 }
 
-export function readFile(input_file: string, bsize=4096) {
-    // from dexcalibur
-    var fin = Java.use("java.io.FileInputStream").$new(input_file);
-    // var content : Array<any> = [];
-    var content : Array<any> = [];
-    var b=null;
-    var jsBuffer = new Uint8Array(bsize);
-    var buffer = Java.array('byte', Array.from(jsBuffer));
-    do{
-        b=fin.read(buffer);
-        if(b != -1) {
-            // TODO : change read file method
-            for (var i=0; i<b; i++) {
-                content.push(buffer[i]);
-            }
-        }
-    } while(b != -1);
-    return content;
+export function makeid(length: number) {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        counter += 1;
+    }
+    return result;
+}
+
+export function readFile(input_file: string) {
+    var buf = readFileSync2(input_file);
+    return buf ? buf : [];
+}
+
+function legacySend(file_name: string, data: string, regexKey: string) {
+    const ActivityThread = Java.use('android.app.ActivityThread');
+    const currentApplication = ActivityThread.currentApplication();
+    const context = currentApplication.getApplicationContext();
+    const appPath = context.getDataDir().getAbsolutePath();
+    const filePath = appPath + "/" + file_name;
+    writeFileSync(filePath, data);
+    log(regexKey + filePath + "END" + regexKey);
 }
