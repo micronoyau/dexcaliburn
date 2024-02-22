@@ -1,6 +1,7 @@
 /_agent.js
-/node_modules
 /dex-files/*
+/logs/*
 /out/*
 __pycache__
+node_modules
 *.swp

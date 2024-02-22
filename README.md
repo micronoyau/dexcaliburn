@@ -2,22 +2,24 @@
 
 ![dexcaliburn](assets/imgs/dexcaliburn.jpg)
 
-### How to compile & load
+## A tool to extract dynamically loaded bytecode
 
-```sh
-$ git clone git://github.com/oleavr/frida-agent-example.git
-$ cd frida-agent-example/
-$ npm install
-$ frida -U -f com.example.android --no-pause -l _agent.js
+### First step
+
+First, run the server with the following command :
+```
+python src/server.py
 ```
 
-### Development workflow
+Then, explore the app to trigger the dynamic bytecode loader.
 
-To continuously recompile on change, keep this running in a terminal:
+Once you are done, you can find bytecode files in `dex-files` and exceptions triggered by reflexive calls in `logs`.
 
-```sh
-$ npm run watch
+### Bytecode analysis
+
+To know where the dynamically loaded methods are invoked, you can launch the following script :
+
+```
+python src/analyze_dex.py [dex file]
 ```
 
-And use an editor like Visual Studio Code for code completion and instant
-type-checking feedback.
