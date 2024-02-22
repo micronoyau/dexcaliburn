@@ -1,7 +1,6 @@
-/_agent.js
 /dex-files/*
 /logs/*
-/out/*
+androguard.db*
 __pycache__
 node_modules
 *.swp
