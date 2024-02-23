@@ -4,14 +4,34 @@
 
 ## A tool to extract dynamically loaded bytecode
 
-### First step
+### Installation & Build
 
-First, run the server with the following command :
+Install frida locally and on the emulator
+
+Install python requierments (frida & androguard):
+
 ```
-python src/server.py
+pip install androguard frida-tools
 ```
 
-Then, explore the app to trigger the dynamic bytecode loader.
+Build the Frida script:
+
+```bash
+cd src/frida-scripts
+npm install
+```
+
+After modifying the `index.ts` file, you need to run `npm run build`.
+
+### Run
+
+First, run the server on the app you want with the following command :
+
+```
+python src/server.py com.example.app
+```
+
+With the server running, use the app to trigger the dynamic bytecode loader.
 
 Once you are done, you can find bytecode files in `dex-files` and exceptions triggered by reflexive calls in `logs`.
 
