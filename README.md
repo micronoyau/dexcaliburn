@@ -6,12 +6,14 @@
 
 ### Installation & Build
 
-Install frida locally and on the emulator
+Install frida :
+ + Locally : https://frida.re/docs/installation/
+ + On your Android device : https://frida.re/docs/android/
 
-Install python requierments (frida & androguard):
+Then, install the following python requirements :
 
-```
-pip install androguard frida-tools
+```bash
+pip install androguard frida-tools pysmali
 ```
 
 Build the Frida script:
@@ -27,7 +29,7 @@ After modifying the `index.ts` file, you need to run `npm run build`.
 
 First, run the server on the app you want with the following command :
 
-```
+```bash
 python src/server.py com.example.app
 ```
 
@@ -37,9 +39,9 @@ Once you are done, you can find bytecode files in `dex-files` and exceptions tri
 
 ### Bytecode analysis
 
-To know where the dynamically loaded methods are invoked, you can launch the following script :
+To know where the dynamically loaded methods were invoked, you can launch the following script :
 
-```
+```bash
 python src/analyze_dex.py [dex file]
 ```
 
