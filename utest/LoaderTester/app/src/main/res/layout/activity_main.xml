@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Can you catch all my loads ?"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.036" />
+
+    <TextView
+        android:id="@+id/text_dexclass"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="100dp"
+        android:layout_marginTop="124dp"
+        android:layout_marginEnd="76dp"
+        android:layout_marginBottom="149dp"
+        android:text="dexClassLoader"
+        app:layout_constraintBottom_toTopOf="@+id/text_pathclass"
+        app:layout_constraintEnd_toStartOf="@+id/button_dexclass"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.43" />
+
+    <Button
+        android:id="@+id/button_dexclass"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="76dp"
+        android:layout_marginTop="65dp"
+        android:layout_marginEnd="86dp"
+        android:layout_marginBottom="118dp"
+        android:text="Load"
+        app:layout_constraintBottom_toTopOf="@+id/button_pathclass"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/text_dexclass"
+        app:layout_constraintTop_toBottomOf="@+id/title"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/text_pathclass"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="67dp"
+        android:layout_marginBottom="88dp"
+        android:text="PathClassLoader"
+        app:layout_constraintBottom_toTopOf="@+id/text_inmemory"
+        app:layout_constraintEnd_toStartOf="@+id/button_pathclass"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_dexclass" />
+
+    <Button
+        android:id="@+id/button_pathclass"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="260dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="130dp"
+        android:text="Load"
+        app:layout_constraintBottom_toTopOf="@+id/button_inmemory"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_dexclass" />
+
+    <Button
+        android:id="@+id/button_inmemory"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="70dp"
+        android:layout_marginBottom="219dp"
+        android:text="Load"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/text_inmemory"
+        app:layout_constraintTop_toBottomOf="@+id/button_pathclass" />
+
+    <TextView
+        android:id="@+id/text_inmemory"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="154dp"
+        android:text="InMemoryClassLoader"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_pathclass" />
+
+    <TextView
+        android:id="@+id/resultText"
+        android:layout_width="212dp"
+        android:layout_height="79dp"
+        android:layout_marginStart="99dp"
+        android:layout_marginTop="88dp"
+        android:layout_marginEnd="100dp"
+        android:layout_marginBottom="53dp"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_inmemory" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
