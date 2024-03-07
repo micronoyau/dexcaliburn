@@ -7,11 +7,20 @@ from sys import argv
 os.system(f"mkdir -p {OUTPUT_FOLDER}")
 os.system(f"mkdir -p {LOG_FOLDER}")
 
+script = None
+
 def error_handler(message):
     """
     Clean logging of errors
     """
     print(message["stack"])
+
+def setup_handler():
+    try:
+        f = open(HOOK_CONFIG_FILE, 'r')
+        script.post({'type': 'hooks', 'payload': f.read()})
+    except:
+        script.post({'type': 'hooks', 'payload': ''})
 
 def dex_handler(file_name, data):
     """
@@ -29,6 +38,7 @@ def invoke_handler(history, data):
             f.write(data["trace"])
 
 MESSAGE_TYPES = {
+    "setup": setup_handler,
     "dex": dex_handler,
     "invoke": invoke_handler,
 }
@@ -37,11 +47,13 @@ def message_handler(message, data):
     """
     Parse messages from Frida to write dex file / log
     """
-    print(message)
     if message["type"] == "send":
         payload = message["payload"]
         id = payload["id"]
         printd(f"Got message of type: {id}\n")
+        if id == "setup":
+            setup_handler()
+            return
         # Dispatch to correct handler
         for (type, handler) in MESSAGE_TYPES.items():
             if(id == type):
