@@ -7,6 +7,12 @@ from sys import argv
 os.system(f"mkdir -p {OUTPUT_FOLDER}")
 os.system(f"mkdir -p {LOG_FOLDER}")
 
+def error_handler(message):
+    """
+    Clean logging of errors
+    """
+    print(message["stack"])
+
 def dex_handler(file_name, data):
     """
     Write [data] in [file_name]
@@ -32,15 +38,17 @@ def message_handler(message, data):
     Parse messages from Frida to write dex file / log
     """
     print(message)
-    payload = message["payload"]
     if message["type"] == "send":
+        payload = message["payload"]
         id = payload["id"]
-        printd(f"Got message of type: {id}")
+        printd(f"Got message of type: {id}\n")
         # Dispatch to correct handler
         for (type, handler) in MESSAGE_TYPES.items():
             if(id == type):
                 handler(payload["data"], data)
                 break
+    elif message["type"] == "error":
+        error_handler(message)
 
 
 if __name__ == '__main__':

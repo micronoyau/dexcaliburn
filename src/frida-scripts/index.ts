@@ -5,7 +5,7 @@
  * Should be run by server, or manually for debug purposes only.
  */
 
-import { log, log2, debounce, readFile } from "./utils.js";
+import { log, log2, debounce, readFile, makeid } from "./utils.js";
 
 export const LOG_LEVEL = 1
 
@@ -77,20 +77,33 @@ function overrideInMemoryDexClassLoader() {
         init.implementation = function (buffer: any[], _libSearchPath, classLoader) {
             log("Loading from memory");
             log("Using " + String(classLoader));
-
-            send({id:"dex", data: 'memory'}, buffer) // May not work as it's a ByteBuffer array
+            for(let buffer of bufferArray) {
+                let len = buffer.remaining();
+                let jsBuffer = new Array(len);
+                for(let i = 0; i<len; i++) {
+                    jsBuffer[i] = buffer.get(i);
+                }
+                send({id:"dex", data: 'memory-' + makeid(3)}, jsBuffer)
+            }
             return init.call(this, buffer, _libSearchPath, classLoader);
         }
     }, "InMemoryDexClassLoader(ByteBuffer[] dexBuffers, String librarySearchPath, ClassLoader parent)");
 
     tryOverride(() => {
         const init = InMemoryDexClassLoader.$init.overload('[java.nio.ByteBuffer', 'java.lang.ClassLoader');
-        init.implementation = function (buffer: any[], classLoader) {
+        init.implementation = function (bufferArray: any[], classLoader) {
             log("Loading from memory");
             log("Using " + String(classLoader));
 
-            send({id:"dex", data: 'memory'}, buffer)
-            return init.call(this, buffer, classLoader);
+            for(let buffer of bufferArray) {
+                let len = buffer.remaining();
+                let jsBuffer = new Array(len);
+                for(let i = 0; i<len; i++) {
+                    jsBuffer[i] = buffer.get(i);
+                }
+                send({id:"dex", data: 'memory-' + makeid(3)}, jsBuffer)
+            }
+            return init.call(this, bufferArray, classLoader);
         }
     }, "InMemoryDexClassLoader(ByteBuffer[] dexBuffers, ClassLoader parent)");
 
@@ -100,7 +113,12 @@ function overrideInMemoryDexClassLoader() {
             log("Loading from memory");
             log("Using " + String(classLoader));
 
-            send({id:"dex", data: 'memory'}, buffer)
+            let len = buffer.remaining();
+            let jsBuffer = new Array(len);
+            for(let i = 0; i<len; i++) { //very slow for big buffers
+                jsBuffer[i] = buffer.get(i);
+            }
+            send({id:"dex", data: 'memory-' + makeid(3)}, jsBuffer)
             return init.call(this, buffer, classLoader);
         }
     }, "InMemoryDexClassLoader(ByteBuffer dexBuffer, ClassLoader parent)");
