@@ -11,15 +11,15 @@ export const LOG_LEVEL = 1
 
 let hookedMethods: { [key: string]: string[] } = {}
 
-var initialClasses: string[] = []
 Java.perform(function () {
     fetchHookConfig()
-    sendDynLoadedDexFile()
+    overrideloadClassForDynHooking();
+    overrideClassLoaderInit();
     captureInvokeCalls()
 })
 
-/*
- * Eeach time a reflexive call is attempted, sends a message with the following :
+/**
+ * Each time a reflexive call is attempted, sends a message with the following :
  * + Full method name
  * + Java exception stack trace
  */
@@ -27,7 +27,7 @@ function captureInvokeCalls() {
     const invoke = Java.use('java.lang.reflect.Method').invoke.overload("java.lang.Object", "[Ljava.lang.Object;");
 
     var invokeHistory = new Set<string>();
-    // Concatenate time-close messages into a single message
+    // Concatenate invoke messages into a single message to avoid flooding
     const debounceSend = debounce(() => {
         let data: {method: string, trace: string}[] = []
         invokeHistory.forEach((value) => {
@@ -67,7 +67,7 @@ function fetchHookConfig() {
     }).wait();
 }
 
-/*
+/**
  * Basic hook for dynamically loaded methods : dump arguments
  */
 function hookDynamicMethod(className: string, methodName: string) {
@@ -91,17 +91,7 @@ function hookDynamicMethod(className: string, methodName: string) {
     return success;
 }
 
-/*
- * Eeach time a loader is initialized, sends a message with the loaded bytecode
- */
-function sendDynLoadedDexFile() {
-    overridePathClassLoader();
-    overrideDexClassLoader();
-    overrideDelegateLastClassLoader();
-    overrideInMemoryDexClassLoader();
-}
-
-/*
+/**
  * Depending on the current API, some loaders might or might not be available.
  */
 function tryOverride(loader: any, loader_prototype: string) {
@@ -112,136 +102,94 @@ function tryOverride(loader: any, loader_prototype: string) {
     }
 }
 
-function overrideInMemoryDexClassLoader() {
+function memoryClassLoaderHookSetup(is_array: boolean) {
+    return function (init_method: Java.Method<{}>) {
+        return function (this: any, ...args: any[]) {
+            log("Loading new dex from memory buffer");
+            let bufferArray = args[0];
+            if(!is_array) {
+                bufferArray = [bufferArray]
+            }
+
+            for(let buffer of bufferArray) {
+                let len = buffer.remaining();
+                let jsBuffer = new Array(len);
+                for(let i = 0; i<len; i++) {
+                    jsBuffer[i] = buffer.get(i);
+                }
+                let file_name = 'memory-' + makeid(3);
+                log(`Sending dex as '${file_name}'`)
+                send({id:"dex", data: file_name}, jsBuffer)
+            }
+            return init_method.call(this, ...args);
+        }
+    }
+}
+
+/**
+ * Return a default implementation for a file dependent classLoader init method
+ */
+function fileClassLoaderHook(init_method: Java.Method<{}>) {
+    return function (this: any, ...args: any[]) {
+        let dexPath = args[0];
+        log("Loading new dex from file: " + dexPath);
+        let file_name = dexPath.split('/').slice(-1)[0]
+        log(`Sending dex as '${file_name}'`)
+        send({id:"dex", data: file_name}, readFile(dexPath))
+        return init_method.call(this, ...args);
+    }
+}
+
+/**
+ * Each time a loader is initialized, sends a message with the loaded bytecode
+ */
+function overrideClassLoaderInit() {
     const InMemoryDexClassLoader = Java.use('dalvik.system.InMemoryDexClassLoader');
-
-    tryOverride(() => {
-        const init = InMemoryDexClassLoader.$init.overload('[java.nio.ByteBuffer;' , 'java.lang.String', 'java.lang.ClassLoader');
-        init.implementation = function (bufferArray: any[], _libSearchPath, classLoader) {
-            log("Loading from memory");
-            log2("Using " + String(classLoader));
-            for(let buffer of bufferArray) {
-                let len = buffer.remaining();
-                let jsBuffer = new Array(len);
-                for(let i = 0; i<len; i++) {
-                    jsBuffer[i] = buffer.get(i);
-                }
-                send({id:"dex", data: 'memory-' + makeid(3)}, jsBuffer)
-            }
-            return init.call(this, bufferArray, _libSearchPath, classLoader);
-        }
-    }, "InMemoryDexClassLoader(ByteBuffer[] dexBuffers, String librarySearchPath, ClassLoader parent)");
-
-    tryOverride(() => {
-        const init = InMemoryDexClassLoader.$init.overload('[java.nio.ByteBuffer', 'java.lang.ClassLoader');
-        init.implementation = function (bufferArray: any[], classLoader) {
-            log("Loading from memory");
-            log2("Using " + String(classLoader));
-
-            for(let buffer of bufferArray) {
-                let len = buffer.remaining();
-                let jsBuffer = new Array(len);
-                for(let i = 0; i<len; i++) {
-                    jsBuffer[i] = buffer.get(i);
-                }
-                send({id:"dex", data: 'memory-' + makeid(3)}, jsBuffer)
-            }
-            return init.call(this, bufferArray, classLoader);
-        }
-    }, "InMemoryDexClassLoader(ByteBuffer[] dexBuffers, ClassLoader parent)");
-
-    tryOverride(() => {
-        const init = InMemoryDexClassLoader.$init.overload('java.nio.ByteBuffer', 'java.lang.ClassLoader');
-        init.implementation = function (buffer, classLoader) {
-            log("Loading from memory");
-            log2("Using " + String(classLoader));
-
-            let len = buffer.remaining();
-            let jsBuffer = new Array(len);
-            for(let i = 0; i<len; i++) { //very slow for big buffers
-                jsBuffer[i] = buffer.get(i);
-            }
-            send({id:"dex", data: 'memory-' + makeid(3)}, jsBuffer)
-            return init.call(this, buffer, classLoader);
-        }
-    }, "InMemoryDexClassLoader(ByteBuffer dexBuffer, ClassLoader parent)");
-}
-
-function overrideDexClassLoader() {
     const DexClassLoader = Java.use('dalvik.system.DexClassLoader');
-
-    tryOverride(() => {
-        const init = DexClassLoader.$init.overload('java.lang.String', 'java.lang.String', 'java.lang.String', 'java.lang.ClassLoader');
-
-        init.implementation = function (dexPath: string, _optiDir, _libSearchPath, classLoader) {
-            log("Loading " + dexPath);
-            log2("Using " + String(classLoader));
-
-            send({id:"dex", data: dexPath.split('/').slice(-1)[0] }, readFile(dexPath))
-            return init.call(this, dexPath, _optiDir, _libSearchPath, classLoader);
-        }
-    }, "DexClassLoader(String dexPath, String optimizedDirectory, String librarySearchPath, ClassLoader parent)");
-}
-
-function overridePathClassLoader() {
     const PathClassLoader = Java.use('dalvik.system.PathClassLoader');
-
-    tryOverride(() => {
-        const init = PathClassLoader.$init.overload('java.lang.String', 'java.lang.ClassLoader');
-        init.implementation = function (dexPath: string, classLoader) {
-            log("Loading " + dexPath);
-            log2("Using " + String(classLoader));
-
-            send({id:"dex", data: dexPath.split('/').slice(-1)[0] }, readFile(dexPath))
-            return init.call(this, dexPath, classLoader);
-        }
-
-        const loadClass = PathClassLoader.loadClass.overload('java.lang.String');
-        loadClass.implementation = function (className: string) {
-            let ret = loadClass.call(this, className);
-            if (className in hookedMethods) {
-                hookedMethods[className].forEach( (methodName: string) => {
-                    hookDynamicMethod(className, methodName);
-                });
-            }
-
-            return ret;
-        }
-    }, "PathClassLoader(String dexPath, ClassLoader parent)");
-}
-
-function overrideDelegateLastClassLoader() {
     const DelegateLastClassLoader = Java.use('dalvik.system.DelegateLastClassLoader');
 
-    tryOverride(() => {
-        const init = DelegateLastClassLoader.$init.overload('java.lang.String', 'java.lang.ClassLoader');
-        init.implementation = function (dexPath: string, classLoader) {
-            log("Loading " + dexPath);
-            log2("Using " + String(classLoader));
+    const registry = [
+        {classLoader: InMemoryDexClassLoader, argsList: ['[java.nio.ByteBuffer;' , 'java.lang.String', 'java.lang.ClassLoader'],
+            hook: memoryClassLoaderHookSetup(true), debugString: "InMemoryDexClassLoader(ByteBuffer[] dexBuffers, String librarySearchPath, ClassLoader parent)"},
+        {classLoader: InMemoryDexClassLoader, argsList: ['[java.nio.ByteBuffer', 'java.lang.ClassLoader'],
+            hook: memoryClassLoaderHookSetup(true), debugString: "InMemoryDexClassLoader(ByteBuffer[] dexBuffers, ClassLoader parent)"},
+        {classLoader: InMemoryDexClassLoader, argsList: ['java.nio.ByteBuffer', 'java.lang.ClassLoader'],
+            hook: memoryClassLoaderHookSetup(false), debugString: "InMemoryDexClassLoader(ByteBuffer[] dexBuffers, ClassLoader parent)"},
+        {classLoader: DexClassLoader, argsList: ['java.lang.String', 'java.lang.String', 'java.lang.String', 'java.lang.ClassLoader'],
+            hook: fileClassLoaderHook, debugString: "DexClassLoader(String dexPath, String optimizedDirectory, String librarySearchPath, ClassLoader parent)"},
+        {classLoader: PathClassLoader, argsList: ['java.lang.String', 'java.lang.ClassLoader'],
+            hook: fileClassLoaderHook, debugString: "PathClassLoader(String dexPath, ClassLoader parent)"},
+        {classLoader: DelegateLastClassLoader, argsList: ['java.lang.String', 'java.lang.ClassLoader'],
+            hook: fileClassLoaderHook, debugString: "DelegateLastClassLoader(String dexPath, ClassLoader parent)"},
+        {classLoader: DelegateLastClassLoader, argsList: ['java.lang.String', 'java.lang.String', 'java.lang.ClassLoader'],
+            hook: fileClassLoaderHook, debugString: "DelegateLastClassLoader(String dexPath, String librarySearchPath, ClassLoader parent)"},
+        {classLoader: DelegateLastClassLoader, argsList: ['java.lang.String', 'java.lang.String', 'java.lang.ClassLoader', 'boolean'],
+            hook: fileClassLoaderHook, debugString: "DelegateLastClassLoader(String dexPath, String librarySearchPath, ClassLoader parent, boolean delegateResourceLoading)"},
+    ];
 
-            send({id:"dex", data: dexPath.split('/').slice(-1)[0] }, readFile(dexPath))
-            return init.call(this, dexPath, classLoader);
-        }
-    }, "DelegateLastClassLoader(String dexPath, ClassLoader parent)");
+    for(let entry of registry) {
+        tryOverride(() => {
+            const init = entry.classLoader.$init.overload(...entry.argsList);
+            init.implementation = entry.hook(init);
+        }, entry.debugString);
+    }
+}
 
-    tryOverride(() => {
-        const init = DelegateLastClassLoader.$init.overload('java.lang.String', 'java.lang.String', 'java.lang.ClassLoader');
-        init.implementation = function (dexPath: string, _optiPath, classLoader) {
-            log("Loading " + dexPath);
-            log2("Using " + String(classLoader));
-
-            send({id:"dex", data: dexPath.split('/').slice(-1)[0] }, readFile(dexPath))
-            return init.call(this, dexPath, _optiPath, classLoader);
-        }
-    }, "DelegateLastClassLoader(String dexPath, String librarySearchPath, ClassLoader parent)");
-
-    tryOverride(() => {
-        const init = DelegateLastClassLoader.$init.overload('java.lang.String', 'java.lang.String', 'java.lang.ClassLoader', 'boolean');
-        init.implementation = function (dexPath: string, _optiPath, classLoader, _bool) {
-            log("Loading " + dexPath);
-            log2("Using " + String(classLoader));
-            send({id:"dex", data: dexPath.split('/').slice(-1)[0] }, readFile(dexPath))
-            return init.call(this, dexPath, _optiPath, classLoader, _bool);
-        }
-    }, "DelegateLastClassLoader(String dexPath, String librarySearchPath, ClassLoader parent, boolean delegateResourceLoading)");
+function overrideloadClassForDynHooking() {
+    for(let classLoaderName of ['InMemoryDexClassLoader', 'DexClassLoader', 'PathClassLoader', 'DelegateLastClassLoader']) {
+        const classLoader = Java.use('dalvik.system.' + classLoaderName);
+        tryOverride(() => {
+            const loadClass = classLoader.loadClass.overload('java.lang.String');
+            loadClass.implementation = function (className: string) {
+                let ret = loadClass.call(this, className);
+                if (className in hookedMethods) {
+                    hookedMethods[className].forEach( (methodName: string) => {
+                        hookDynamicMethod(className, methodName);
+                    });
+                }
+                return ret;
+            }
+        }, `${classLoaderName}.loadClass(String className)`);
+    }
 }
