@@ -112,11 +112,9 @@ function memoryClassLoaderHookSetup(is_array: boolean) {
             }
 
             for(let buffer of bufferArray) {
-                let len = buffer.remaining();
-                let jsBuffer = new Array(len);
-                for(let i = 0; i<len; i++) {
-                    jsBuffer[i] = buffer.get(i);
-                }
+                // https://github.com/frida/frida/issues/1281
+                var jsonString = Java.use('org.json.JSONArray').$new(buffer.array()).toString();
+                var jsBuffer = JSON.parse(jsonString);
                 let file_name = 'memory-' + makeid(3);
                 log(`Sending dex as '${file_name}'`)
                 send({id:"dex", data: file_name}, jsBuffer)
@@ -155,7 +153,7 @@ function overrideClassLoaderInit() {
         {classLoader: InMemoryDexClassLoader, argsList: ['[java.nio.ByteBuffer', 'java.lang.ClassLoader'],
             hook: memoryClassLoaderHookSetup(true), debugString: "InMemoryDexClassLoader(ByteBuffer[] dexBuffers, ClassLoader parent)"},
         {classLoader: InMemoryDexClassLoader, argsList: ['java.nio.ByteBuffer', 'java.lang.ClassLoader'],
-            hook: memoryClassLoaderHookSetup(false), debugString: "InMemoryDexClassLoader(ByteBuffer[] dexBuffers, ClassLoader parent)"},
+            hook: memoryClassLoaderHookSetup(false), debugString: "InMemoryDexClassLoader(ByteBuffer dexBuffer, ClassLoader parent)"},
         {classLoader: DexClassLoader, argsList: ['java.lang.String', 'java.lang.String', 'java.lang.String', 'java.lang.ClassLoader'],
             hook: fileClassLoaderHook, debugString: "DexClassLoader(String dexPath, String optimizedDirectory, String librarySearchPath, ClassLoader parent)"},
         {classLoader: PathClassLoader, argsList: ['java.lang.String', 'java.lang.ClassLoader'],
