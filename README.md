@@ -6,14 +6,14 @@
 
 ### Installation & Build
 
-Install frida :
- + Locally : https://frida.re/docs/installation/
+First, install Frida :
+ + Locally : https://frida.re/docs/installation/ (`pip install frida-tools`)
  + On your Android device : https://frida.re/docs/android/
 
 Then, install the following python requirements :
 
 ```bash
-pip install androguard frida-tools pysmali
+pip install androguard pysmali
 ```
 
 Build the Frida script:
@@ -21,23 +21,26 @@ Build the Frida script:
 ```bash
 cd src/frida-scripts
 npm install
+npm run build
 ```
 
-After modifying the `index.ts` file, you need to run `npm run build`.
+Every time `index.ts` is modified, you need to run `npm run build`.
 
-### Run
+### Usage
 
-First, run the server on the app you want with the following command :
+First, launch the server on the target app with the following command :
 
 ```bash
-python src/server.py com.example.app
+python src/server.py com.example.app out.json
 ```
 
-With the server running, use the app to trigger the dynamic bytecode loader.
+You can now use the app to trigger dynamic class loading.
 
-Once you are done, you can find bytecode files in `dex-files` and exceptions triggered by reflexive calls in `logs`.
+Once you are done, press enter to save your results. The bytecode files can be found in `dex-files` and reflexive calls are logged in the JSON file.
 
 ### Bytecode analysis
+
+[TODO]
 
 To know where the dynamically loaded methods were invoked, you can launch the following script :
 

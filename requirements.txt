@@ -1,0 +1,3 @@
+androguard==4.0.2
+frida-tools==12.3.0
+pysmali==0.2.3
