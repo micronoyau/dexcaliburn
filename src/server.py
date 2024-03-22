@@ -3,11 +3,12 @@ import time
 import os
 from utils import *
 from sys import argv
+import json
 
 os.system(f"mkdir -p {OUTPUT_FOLDER}")
-os.system(f"mkdir -p {LOG_FOLDER}")
-
 script = None
+banner = "Welcome to dexcaliburn ! \
+To exit, press [enter]"
 
 def error_handler(message):
     """
@@ -22,55 +23,49 @@ def setup_handler():
     except:
         script.post({'type': 'hooks', 'payload': ''})
 
-def dex_handler(file_name, data):
+def dex_handler(filename, data):
     """
-    Write [data] in [file_name]
+    Write [data] in [filename]
     """
-    with open(f'{OUTPUT_FOLDER}/{file_name}', 'wb') as f:
+    with open(f'{OUTPUT_FOLDER}/{filename}', 'wb') as f:
         f.write(data)
 
-def invoke_handler(history, data):
+def rundata_handler(rundata):
     """
-    Write log [data] in corresponding log file
+    Fetch runtime data from frida
     """
-    for (idx,data) in enumerate(history):
-        with open(f'{LOG_FOLDER}/{data["method"]}-{idx}.txt', 'w') as f:
-            f.write(data["trace"])
-
-MESSAGE_TYPES = {
-    "setup": setup_handler,
-    "dex": dex_handler,
-    "invoke": invoke_handler,
-}
+    print("\n### Summary ###\n")
+    print(json.dumps(rundata, indent=2))
+    with open(argv[2], 'w') as f:
+        f.write(json.dumps(rundata, indent=2))
 
 def message_handler(message, data):
     """
     Parse messages from Frida to write dex file / log
     """
-    if message["type"] == "send":
+    if message["type"] == "error":
+        error_handler(message)
+
+    elif message["type"] == "send":
         payload = message["payload"]
         id = payload["id"]
         printd(f"Got message of type: {id}\n")
+
         if id == "setup":
             setup_handler()
-            return
-        # Dispatch to correct handler
-        for (type, handler) in MESSAGE_TYPES.items():
-            if(id == type):
-                handler(payload["data"], data)
-                break
-    elif message["type"] == "error":
-        error_handler(message)
+        elif id == "dex":
+            dex_handler(payload["filename"], data)
+        elif id == "rundata":
+            rundata_handler(payload["runData"])
 
 
 if __name__ == '__main__':
     device = frida.get_usb_device()
 
-    if len(argv) == 2:
+    if len(argv) == 3:
         pid = device.spawn([argv[1]])
-    elif len(argv) == 1:
-        pid = device.spawn(["com.example.ut_dyn_load"])
     else:
+        print(f"Usage : {argv[0]} [app] [output json file]")
         exit(-1)
 
     session = device.attach(pid)
@@ -86,4 +81,7 @@ if __name__ == '__main__':
     script.load()
     device.resume(pid)
 
+    print(banner)
+    input()
+    script.post({'type': 'rundata'})
     input()
