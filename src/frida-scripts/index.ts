@@ -18,9 +18,13 @@ enum LocationSource {
 let runData: {
     dexFiles: string[],
     xrefs: {
-        method: string
+        method: {
+            className: string,
+            methodName: string,
+            prototype: string
+        }
         location: {
-            calling_method: string,
+            callingMethod: string,
             position: number,
             source: LocationSource
         },
@@ -95,29 +99,44 @@ function captureInvokeCalls() {
 
     invoke.implementation = function(obj1: Object, obj2: Object[]) {
         log2("Invoked : " + this.getName());
-        let method = this.toGenericString();
+        let methodFull = this.toGenericString();
         let stacktrace: string = Java.use("android.util.Log").getStackTraceString(Java.use("java.lang.Exception").$new());
-        let raw_location = stacktrace.split('\n')[2];
+        let rawLocation = stacktrace.split('\n')[2];
+
+        let regexOrEmpty = (x: RegExpMatchArray | null) => {
+            let a = x?.[0];
+            return (a ? a : '')
+        };
+
+        // Parse method
+        let classAndMethod = regexOrEmpty(methodFull.match(/([^\s]*(?=\(.*\)))/));
+        let method = {
+            className: regexOrEmpty(classAndMethod.match(/.*(?=\.)/)),
+            methodName: regexOrEmpty(classAndMethod.match(/[^\.]*$/)),
+            prototype: regexOrEmpty(methodFull.match(/.*(?=\s)/)) + '(' + regexOrEmpty(methodFull.match(/(?<=\().*(?=\))/)) + ')'
+        }
 
         // Parse raw location
-        let calling_method = raw_location.match(/(?<=\tat\s).*(?=\()/)?.[0];
-        if (!calling_method) calling_method = '';
-        let source = raw_location.match(/(?<=\().*(?=:)/)?.[0] === 'Unknown Source'
+        let callingMethod = regexOrEmpty(rawLocation.match(/(?<=\tat\s).*(?=\()/));
+        let source = regexOrEmpty(rawLocation.match(/(?<=\().*(?=:)/)) === 'Unknown Source'
             ? LocationSource.BINARY
             : LocationSource.DEBUG;
-        let position_ = raw_location.match(/(?<=:).*(?=\))/)?.[0];
+        let position_ = rawLocation.match(/(?<=:).*(?=\))/)?.[0];
         let position = (position_ ? Number(position_) : 0);
 
         // JS does not allow tuple-indexed dictionaries, this is an non-optimal way around
-        let xref_index = runData.xrefs.findIndex(xref => (xref.method == method)
-            && (xref.location.calling_method == calling_method)
-            && (xref.location.source == source)
-            && (xref.location.position == position));
+        let xref_index = runData.xrefs.findIndex(xref =>
+            (xref.method.className === method.className)
+            && (xref.method.methodName === method.methodName)
+            && (xref.method.prototype === method.prototype)
+            && (xref.location.callingMethod === callingMethod)
+            && (xref.location.position === position)
+            && (xref.location.source === source));
         if (xref_index == -1) {
             runData.xrefs.push({
                 method: method,
                 location: {
-                    calling_method: calling_method,
+                    callingMethod: callingMethod,
                     position: position,
                     source: source
                 },
