@@ -4,6 +4,21 @@
 
 ## A tool to extract dynamically loaded bytecode
 
+### Supported features
+
+| Feature | Support |
+|---------|---------|
+| DexClassLoader hook | Full :white_check_mark: |
+| PathClassLoader hook | Full :white_check_mark: |
+| InMemoryClassLoader hook | Full :white_check_mark: |
+| URLClassLoader hook | No :no_entry_sign: |
+| DelegateLastClassLoader hook | No :no_entry_sign: |
+| SecureClassLoader hook | No :no_entry_sign: |
+| Reflexive call xrefs | Full :white_check_mark: |
+| Double load | Full :white_check_mark: |
+| Custom ClassLoader | Partial :large_orange_diamond: |
+
+
 ### Installation & Build
 
 First, install Frida :
