@@ -112,4 +112,52 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_inmemory" />
 
+    <Button
+        android:id="@+id/button_double"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="34dp"
+        android:layout_marginBottom="16dp"
+        android:text="Double Load"
+        app:layout_constraintBottom_toTopOf="@+id/resultText"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="184dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginBottom="156dp"
+        android:text="DexClass inside PathClass"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/button_outer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="294dp"
+        android:layout_marginTop="37dp"
+        android:layout_marginEnd="27dp"
+        android:layout_marginBottom="43dp"
+        android:text="Load"
+        app:layout_constraintBottom_toTopOf="@+id/button_pathclass"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_dexclass" />
+
+    <TextView
+        android:id="@+id/text_outer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="42dp"
+        android:layout_marginTop="68dp"
+        android:layout_marginEnd="64dp"
+        android:layout_marginBottom="70dp"
+        android:text="PathClassLoader + outerClass"
+        app:layout_constraintBottom_toTopOf="@+id/text_pathclass"
+        app:layout_constraintEnd_toStartOf="@+id/button_outer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_dexclass" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

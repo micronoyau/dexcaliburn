@@ -31,7 +31,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        String file_url = "https://filebin.net/tt7s4zrczklgu6fd/badclass.dex";
+        String file_url = "https://filebin.net/xflqup5y1q75y0bv/badclass.dex";
+        String file_local_double = "";
         super.onCreate(savedInstanceState);
         StrictMode. ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -42,14 +43,95 @@ public class MainActivity extends AppCompatActivity {
         Button pathclassloadButton = (Button) findViewById(R.id.button_pathclass);
         Button dexclassButton = (Button) findViewById(R.id.button_dexclass);
 
+
         TextView textinmemory = (TextView) findViewById(R.id.text_inmemory);
         TextView textPathClass = (TextView) findViewById(R.id.text_pathclass);
         TextView textDexClass = (TextView) findViewById(R.id.text_dexclass);
 
+        Button doubleButton = (Button) findViewById(R.id.button_double);
+
         TextView resultText = (TextView) findViewById(R.id.resultText);
 
+        Button outerButton = (Button) findViewById(R.id.button_outer);
 
+        outerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    File file = new File(getApplicationContext().getDir("double", 0), "double" + ".dex");
 
+                    InputStream open = getApplicationContext().getAssets().open("double");
+                    FileOutputStream fileOutputStream = new FileOutputStream(file);
+                    byte[] bArr = new byte[64];
+                    while (true) {
+                        int read = open.read(bArr);
+                        if (read == -1)
+                            break;
+                        fileOutputStream.write(bArr, 0, read);
+                    }
+
+                    fileOutputStream.flush();
+                    fileOutputStream.close();
+                    open.close();
+                    PathClassLoader classLoader = new PathClassLoader(file.getAbsolutePath(), getClass().getClassLoader());
+                    //Class<?> clz = classLoader.loadClass("q3.a");
+                    Class<?> clz = classLoader.loadClass("com.example.doubleloadbase.example");
+                    Constructor<?>[] ci = clz.getConstructors();
+                    Constructor<?> c = clz.getConstructor(Context.class);
+
+                    Object ex = c.newInstance(getApplicationContext());
+                    Method m = clz.getMethod("getOuterValue",String.class);
+
+                    String showntext = (String) m.invoke(ex,"NewArgument1");
+                    if (showntext == "I am now here !") {
+                        resultText.setText("Loaded with Loader+outerClass !");
+                    }
+                }
+                catch (Exception e){
+                    System.out.println(e);
+                }
+            }
+        });
+
+        doubleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    File file = new File(getApplicationContext().getDir("double", 0), "double" + ".dex");
+
+                    InputStream open = getApplicationContext().getAssets().open("double");
+                    FileOutputStream fileOutputStream = new FileOutputStream(file);
+                    byte[] bArr = new byte[64];
+                    while (true) {
+                        int read = open.read(bArr);
+                        if (read == -1)
+                            break;
+                        fileOutputStream.write(bArr, 0, read);
+                    }
+
+                    fileOutputStream.flush();
+                    fileOutputStream.close();
+                    open.close();
+                    PathClassLoader classLoader = new PathClassLoader(file.getAbsolutePath(), getClass().getClassLoader());
+                    //Class<?> clz = classLoader.loadClass("q3.a");
+                    Class<?> clz = classLoader.loadClass("com.example.doubleloadbase.example");
+                    Constructor<?>[] ci = clz.getConstructors();
+                    Constructor<?> c = clz.getConstructor(Context.class);
+
+                    Object ex = c.newInstance(getApplicationContext());
+                    Method m = clz.getMethod("load",String.class,int.class,Context.class);
+
+                    String showntext = (String) m.invoke(ex,"Argument1",2,getApplicationContext());
+                    if (showntext == "I am now here !") {
+                        resultText.setText("Loaded with doubleLoader !");
+                    }
+                }
+                catch (Exception e){
+                    System.out.println(e);
+                }
+
+            }
+        });
 
 
 
@@ -203,7 +285,9 @@ public class MainActivity extends AppCompatActivity {
                         Object ex = c.newInstance();
                         Method m = clz.getMethod("a");
                         String showntext = (String) m.invoke(ex);
-                        textinmemory.setText(showntext);
+                        if (showntext == "I am now here !"){
+                            resultText.setText("Loaded with inMemoryLoader !");
+                        }
 
                     }
                 } catch (MalformedURLException e) {
