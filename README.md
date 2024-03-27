@@ -63,3 +63,19 @@ To know where the dynamically loaded methods were invoked, you can launch the fo
 python src/analyze_dex.py [dex file]
 ```
 
+### Test App
+
+A test app `LoaderTester` is available and ready to use in order to check how the tool handles edge cases.
+
+The source code is in `utest/LoaderTester` and the builded apk is located at `utest/apk/loader-tester.apk`.
+
+The app allows to test multiple kind of dynamic loading by clicking on buttons. If successful, a text is shown at the bottom of the screen.  
+
+| Test | Description |
+|---------|---------|
+| dexClassLoader | Downloads a dex-file from an online filebin and loads a class through dexClassLoader  |
+| PathClassLoader | Downloads a dex-file from an online filebin and loads a class through pathClassLoader |
+| PathClassLoader + outerClass | Loads a class from a local dex-file through pathClassLoader. The loaded class instantiates another class through the "new" keyword |
+| inMemoryClassLoader | Stores a dex-file fetched from an online filebin in a buffer and loads a class through inMemoryClassLoader |
+| DexClass inside PathClass | Loads a class from a local dex-file through pathClassLoader. The loaded class downloads a dex-file from an online filebin and loads itself another class through dexClassLoader |
+ 
