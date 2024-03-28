@@ -49,12 +49,15 @@ export function getJavaBufferFromPath(pathString: string): any {
   return Java.use('java.nio.file.Files').readAllBytes(path);
 }
 
-export function sha265_fromJavaBuffer(buffer: any) {
+export function sha256_fromJavaBuffer(buffer: any) {
   const md = Java.use('java.security.MessageDigest').getInstance('SHA-256');
   md.update(buffer);
+  if (buffer.rewind) {
+    buffer.rewind();
+  }
   return toHexString(md.digest());
 }
 
-export function sha265_fromFilePath(pathString: string) {
-  return sha265_fromJavaBuffer(getJavaBufferFromPath(pathString));
+export function sha256_fromFilePath(pathString: string) {
+  return sha256_fromJavaBuffer(getJavaBufferFromPath(pathString));
 }

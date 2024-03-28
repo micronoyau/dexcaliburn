@@ -5,7 +5,7 @@
  * Should be run by server, or manually for debug purposes only.
  */
 
-import { getJSBufferFromJavaBuffer, getJavaBufferFromPath, log, log2, sha265_fromFilePath, sha265_fromJavaBuffer } from "./utils.js";
+import { getJSBufferFromJavaBuffer, getJavaBufferFromPath, log, log2, sha256_fromFilePath, sha256_fromJavaBuffer } from "./utils.js";
 
 export const LOG_LEVEL = 1
 enum LocationSource {
@@ -207,7 +207,7 @@ function memoryClassLoaderHookSetup(first_argument_is_array: boolean) {
 
       for (let buffer of bufferArray) {
         const jsBuffer = getJSBufferFromJavaBuffer(buffer.array());
-        let filename = 'memory-' + sha265_fromJavaBuffer(buffer);
+        let filename = 'memory-' + sha256_fromJavaBuffer(buffer);
         log(`Sending dex as '${filename}'`)
         send({ id: "dex", filename: filename }, jsBuffer)
         runData.dexFiles.push(filename);
@@ -224,7 +224,7 @@ function fileClassLoaderHook(init_method: Java.Method<{}>) {
   return function(this: any, ...args: any[]) {
     let dexPath = args[0];
     log("Loading new dex from file: " + dexPath);
-    let filename = dexPath.split('/').slice(-1)[0] + '-' + sha265_fromFilePath(dexPath);
+    let filename = dexPath.split('/').slice(-1)[0] + '-' + sha256_fromFilePath(dexPath);
     log(`Sending dex as '${filename}'`)
     send({ id: "dex", filename: filename }, getJSBufferFromJavaBuffer(getJavaBufferFromPath(dexPath)))
     runData.dexFiles.push(filename);
