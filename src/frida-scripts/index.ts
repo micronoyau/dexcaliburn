@@ -236,12 +236,17 @@ function fileClassLoaderHook(init_method: Java.Method<{}>) {
  * Each time a loader is initialized, sends a message with the loaded bytecode
  */
 function overrideClassLoaderInit() {
+  const BaseDexClassLoader = tryJavaUse('dalvik.system.BaseDexClassLoader');
   const InMemoryDexClassLoader = tryJavaUse('dalvik.system.InMemoryDexClassLoader');
   const DexClassLoader = tryJavaUse('dalvik.system.DexClassLoader');
   const PathClassLoader = tryJavaUse('dalvik.system.PathClassLoader');
   const DelegateLastClassLoader = tryJavaUse('dalvik.system.DelegateLastClassLoader');
 
   const registry = [
+    {
+      classLoader: BaseDexClassLoader, argsList: ['java.lang.String', 'java.io.File', 'java.lang.String', 'java.lang.ClassLoader'],
+      hook: fileClassLoaderHook, debugString: "BaseDexClassLoader(String dexPath, File optimizedDirectory, String librarySearchPath, ClassLoader parent)"
+    },
     {
       classLoader: InMemoryDexClassLoader, argsList: ['[java.nio.ByteBuffer;', 'java.lang.String', 'java.lang.ClassLoader'],
       hook: memoryClassLoaderHookSetup(true), debugString: "InMemoryDexClassLoader(ByteBuffer[] dexBuffers, String librarySearchPath, ClassLoader parent)"
