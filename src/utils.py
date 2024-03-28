@@ -1,3 +1,5 @@
+import json
+
 DEBUG = True
 DEX_FOLDER = 'dex-files'
 LOG_FOLDER = 'logs'
@@ -12,3 +14,6 @@ def panic(msg: str):
 def printd(msg):
     if DEBUG:
         print(msg)
+
+def dump_json(json_data):
+    return json.dumps(json_data, indent=2)
