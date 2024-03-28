@@ -3,3 +3,4 @@
 androguard.db*
 __pycache__
 *.swp
+*.json
