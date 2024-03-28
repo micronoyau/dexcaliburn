@@ -1,4 +1,4 @@
-/*
+/**
  * Frida script. Goals :
  * + Intercept dynamically loaded bytecode and dump it
  * + Intercept reflexive method calls
@@ -43,7 +43,7 @@ Java.perform(function() {
     captureInvokeCalls();
 })
 
-/*
+/**
  * Receives a list of methods to be dynamically hooked
  */
 function fetchHookConfig() {
@@ -62,7 +62,7 @@ function fetchHookConfig() {
     }).wait();
 }
 
-/*
+/**
  * Sets up the handler to send all data upon quitting
  */
 function setupExitHandler() {
@@ -73,7 +73,8 @@ function setupExitHandler() {
 
 function overrideloadClassForDynHooking() {
     for (let classLoaderName of ['InMemoryDexClassLoader', 'DexClassLoader', 'PathClassLoader', 'DelegateLastClassLoader']) {
-        const classLoader = Java.use('dalvik.system.' + classLoaderName);
+        const classLoader = tryJavaUse('dalvik.system.' + classLoaderName);
+        if(!classLoader) continue;
         tryOverride(() => {
             const loadClass = classLoader.loadClass.overload('java.lang.String');
             loadClass.implementation = function(className: string) {
@@ -89,7 +90,7 @@ function overrideloadClassForDynHooking() {
     }
 }
 
-/*
+/**
  * Each time a reflexive call is attempted, stores the following :
  * + Full method name
  * + Java exception stack trace
@@ -150,7 +151,7 @@ function captureInvokeCalls() {
     }
 }
 
-/*
+/**
  * Basic hook for dynamically loaded methods : dump arguments
  */
 function hookDynamicMethod(className: string, methodName: string) {
@@ -170,7 +171,7 @@ function hookDynamicMethod(className: string, methodName: string) {
     });
 }
 
-/*
+/**
  * Depending on the current API, some loaders might or might not be available.
  */
 function tryOverride(loader: any, loader_prototype: string) {
@@ -181,15 +182,27 @@ function tryOverride(loader: any, loader_prototype: string) {
     }
 }
 
-/*
+/**
+ * Depending on the current API, some loaders might or might not be available.
+ */
+function tryJavaUse(className: string) {
+    try {
+        return Java.use(className);
+    } catch (e) {
+        log(`Could not find ${className}`);
+        return null;
+    }
+}
+
+/**
  * Return a default implementation for a memory dependent classLoader init method
  */
-function memoryClassLoaderHookSetup(is_array: boolean) {
+function memoryClassLoaderHookSetup(first_argument_is_array: boolean) {
     return function(init_method: Java.Method<{}>) {
         return function(this: any, ...args: any[]) {
             log("Loading new dex from memory buffer");
             let bufferArray = args[0];
-            if (!is_array) {
+            if (!first_argument_is_array) {
                 bufferArray = [bufferArray]
             }
 
@@ -207,7 +220,7 @@ function memoryClassLoaderHookSetup(is_array: boolean) {
     }
 }
 
-/*
+/**
  * Return a default implementation for a file dependent classLoader init method
  */
 function fileClassLoaderHook(init_method: Java.Method<{}>) {
@@ -222,14 +235,14 @@ function fileClassLoaderHook(init_method: Java.Method<{}>) {
     }
 }
 
-/*
+/**
  * Each time a loader is initialized, sends a message with the loaded bytecode
  */
 function overrideClassLoaderInit() {
-    const InMemoryDexClassLoader = Java.use('dalvik.system.InMemoryDexClassLoader');
-    const DexClassLoader = Java.use('dalvik.system.DexClassLoader');
-    const PathClassLoader = Java.use('dalvik.system.PathClassLoader');
-    const DelegateLastClassLoader = Java.use('dalvik.system.DelegateLastClassLoader');
+    const InMemoryDexClassLoader = tryJavaUse('dalvik.system.InMemoryDexClassLoader');
+    const DexClassLoader = tryJavaUse('dalvik.system.DexClassLoader');
+    const PathClassLoader = tryJavaUse('dalvik.system.PathClassLoader');
+    const DelegateLastClassLoader = tryJavaUse('dalvik.system.DelegateLastClassLoader');
 
     const registry = [
         {
@@ -266,10 +279,11 @@ function overrideClassLoaderInit() {
         },
     ];
 
-    for (let entry of registry) {
+    for (let { classLoader, hook, argsList, debugString } of registry) {
         tryOverride(() => {
-            const init = entry.classLoader.$init.overload(...entry.argsList);
-            init.implementation = entry.hook(init);
-        }, entry.debugString);
+          if(!classLoader) return;
+            const init = classLoader.$init.overload(...argsList);
+            init.implementation = hook(init);
+        }, debugString);
     }
 }
