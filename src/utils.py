@@ -1,5 +1,5 @@
 DEBUG = True
-OUTPUT_FOLDER = 'dex-files'
+DEX_FOLDER = 'dex-files'
 LOG_FOLDER = 'logs'
 FRIDA_SCRIPT = 'src/frida-scripts/out/_script.js'
 HOOK_CONFIG_FILE = 'hooks.config'
