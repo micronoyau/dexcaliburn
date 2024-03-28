@@ -53,7 +53,7 @@ def filter_xrefs_files(input, output):
             rundata = filter_xrefs(json.loads(f.read()))
             rundata_filtered = dump_json(rundata)
             out.write(rundata_filtered)
-            print(f"Filtered output (written in {args.output}):")
+            print(f"Filtered output (saved to {output}):")
             print(rundata_filtered)
 
 
