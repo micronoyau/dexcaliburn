@@ -1,49 +1,60 @@
-import { readFileSync2, writeFileSync } from "./frida-fs.js";
 import { LOG_LEVEL } from "./index.js";
 
 export function log(message: string): void {
-    if(LOG_LEVEL>0) {
-        console.log(message);
-    }
+  if (LOG_LEVEL > 0) {
+    console.log(message);
+  }
 }
 
 export function log2(message: string): void {
-    if(LOG_LEVEL>1) {
-        console.log(message);
-    }
+  if (LOG_LEVEL > 1) {
+    console.log(message);
+  }
 }
 
-export function debounce(func: any, timeout = 300){
+export function debounce(func: any, timeout = 300) {
   let timer: ReturnType<typeof setTimeout>;
-  return function (this: any, ...args: any[]) {
+  return function(this: any, ...args: any[]) {
     clearTimeout(timer);
     timer = setTimeout(() => { func.apply(this, args); }, timeout);
   };
 }
 
 export function makeid(length: number) {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-    let counter = 0;
-    while (counter < length) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        counter += 1;
-    }
-    return result;
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  let counter = 0;
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+  return result;
 }
 
-export function readFile(input_file: string) {
-    var buf = readFileSync2(input_file);
-    return buf ? buf : [];
+function toHexString(byteArray: any[]) {
+  return Array.from(byteArray, function(byte) {
+    return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+  }).join('')
 }
 
-function legacySend(file_name: string, data: string, regexKey: string) {
-    const ActivityThread = Java.use('android.app.ActivityThread');
-    const currentApplication = ActivityThread.currentApplication();
-    const context = currentApplication.getApplicationContext();
-    const appPath = context.getDataDir().getAbsolutePath();
-    const filePath = appPath + "/" + file_name;
-    writeFileSync(filePath, data);
-    log(regexKey + filePath + "END" + regexKey);
+export function getJSBufferFromJavaBuffer(buffer: any): any[] {
+  // https://github.com/frida/frida/issues/1281
+  const jsonString = Java.use('org.json.JSONArray').$new(buffer).toString();
+  return JSON.parse(jsonString);
+}
+
+export function getJavaBufferFromPath(pathString: string): any {
+  const path = Java.use('java.nio.file.Paths').get(pathString, []);
+  return Java.use('java.nio.file.Files').readAllBytes(path);
+}
+
+export function sha265_fromJavaBuffer(buffer: any) {
+  const md = Java.use('java.security.MessageDigest').getInstance('SHA-256');
+  md.update(buffer);
+  return toHexString(md.digest());
+}
+
+export function sha265_fromFilePath(pathString: string) {
+  return sha265_fromJavaBuffer(getJavaBufferFromPath(pathString));
 }

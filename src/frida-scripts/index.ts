@@ -5,10 +5,9 @@
  * Should be run by server, or manually for debug purposes only.
  */
 
-import { log, log2, readFile, makeid } from "./utils.js";
+import { getJSBufferFromJavaBuffer, getJavaBufferFromPath, log, log2, sha265_fromFilePath, sha265_fromJavaBuffer } from "./utils.js";
 
 export const LOG_LEVEL = 1
-
 enum LocationSource {
   DEBUG = 'debug',
   BINARY = 'binary'
@@ -207,10 +206,8 @@ function memoryClassLoaderHookSetup(first_argument_is_array: boolean) {
       }
 
       for (let buffer of bufferArray) {
-        // https://github.com/frida/frida/issues/1281
-        var jsonString = Java.use('org.json.JSONArray').$new(buffer.array()).toString();
-        var jsBuffer = JSON.parse(jsonString);
-        let filename = 'memory-' + makeid(3);
+        const jsBuffer = getJSBufferFromJavaBuffer(buffer.array());
+        let filename = 'memory-' + sha265_fromJavaBuffer(buffer);
         log(`Sending dex as '${filename}'`)
         send({ id: "dex", filename: filename }, jsBuffer)
         runData.dexFiles.push(filename);
@@ -227,9 +224,9 @@ function fileClassLoaderHook(init_method: Java.Method<{}>) {
   return function(this: any, ...args: any[]) {
     let dexPath = args[0];
     log("Loading new dex from file: " + dexPath);
-    let filename = dexPath.split('/').slice(-1)[0]
+    let filename = dexPath.split('/').slice(-1)[0] + '-' + sha265_fromFilePath(dexPath);
     log(`Sending dex as '${filename}'`)
-    send({ id: "dex", filename: filename }, readFile(dexPath))
+    send({ id: "dex", filename: filename }, getJSBufferFromJavaBuffer(getJavaBufferFromPath(dexPath)))
     runData.dexFiles.push(filename);
     return init_method.call(this, ...args);
   }
