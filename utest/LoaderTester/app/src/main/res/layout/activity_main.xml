@@ -19,145 +19,39 @@
         app:layout_constraintVertical_bias="0.036" />
 
     <TextView
-        android:id="@+id/text_dexclass"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="100dp"
-        android:layout_marginTop="124dp"
-        android:layout_marginEnd="76dp"
-        android:layout_marginBottom="149dp"
-        android:text="dexClassLoader"
-        app:layout_constraintBottom_toTopOf="@+id/text_pathclass"
-        app:layout_constraintEnd_toStartOf="@+id/button_dexclass"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.43" />
-
-    <Button
-        android:id="@+id/button_dexclass"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="76dp"
-        android:layout_marginTop="65dp"
-        android:layout_marginEnd="86dp"
-        android:layout_marginBottom="118dp"
-        android:text="Load"
-        app:layout_constraintBottom_toTopOf="@+id/button_pathclass"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/text_dexclass"
-        app:layout_constraintTop_toBottomOf="@+id/title"
-        app:layout_constraintVertical_bias="0.0" />
-
-    <TextView
-        android:id="@+id/text_pathclass"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="40dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="67dp"
-        android:layout_marginBottom="88dp"
-        android:text="PathClassLoader"
-        app:layout_constraintBottom_toTopOf="@+id/text_inmemory"
-        app:layout_constraintEnd_toStartOf="@+id/button_pathclass"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_dexclass" />
-
-    <Button
-        android:id="@+id/button_pathclass"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="260dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="130dp"
-        android:text="Load"
-        app:layout_constraintBottom_toTopOf="@+id/button_inmemory"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_dexclass" />
-
-    <Button
-        android:id="@+id/button_inmemory"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="70dp"
-        android:layout_marginBottom="219dp"
-        android:text="Load"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/text_inmemory"
-        app:layout_constraintTop_toBottomOf="@+id/button_pathclass" />
-
-    <TextView
-        android:id="@+id/text_inmemory"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="40dp"
-        android:layout_marginTop="154dp"
-        android:text="InMemoryClassLoader"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_pathclass" />
-
-    <TextView
         android:id="@+id/resultText"
         android:layout_width="212dp"
         android:layout_height="79dp"
         android:layout_marginStart="99dp"
-        android:layout_marginTop="88dp"
         android:layout_marginEnd="100dp"
         android:layout_marginBottom="53dp"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_inmemory" />
-
-    <Button
-        android:id="@+id/button_double"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="34dp"
-        android:layout_marginBottom="16dp"
-        android:text="Double Load"
-        app:layout_constraintBottom_toTopOf="@+id/resultText"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="184dp"
-        android:layout_height="44dp"
-        android:layout_marginStart="40dp"
-        android:layout_marginBottom="156dp"
-        android:text="DexClass inside PathClass"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <Button
-        android:id="@+id/button_outer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="294dp"
-        android:layout_marginTop="37dp"
-        android:layout_marginEnd="27dp"
-        android:layout_marginBottom="43dp"
-        android:text="Load"
-        app:layout_constraintBottom_toTopOf="@+id/button_pathclass"
-        app:layout_constraintEnd_toEndOf="parent"
+    <Spinner
+        android:id="@+id/method_spinner"
+        android:layout_width="168dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="190dp"
+        android:layout_marginTop="52dp"
+        android:layout_marginEnd="20dp"
+        android:spinnerMode="dropdown"
+        app:layout_constraintEnd_toStartOf="@+id/test_button"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_dexclass" />
+        app:layout_constraintTop_toBottomOf="@+id/title" />
 
-    <TextView
-        android:id="@+id/text_outer"
+    <Button
+        android:id="@+id/test_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="42dp"
-        android:layout_marginTop="68dp"
-        android:layout_marginEnd="64dp"
-        android:layout_marginBottom="70dp"
-        android:text="PathClassLoader + outerClass"
-        app:layout_constraintBottom_toTopOf="@+id/text_pathclass"
-        app:layout_constraintEnd_toStartOf="@+id/button_outer"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_dexclass" />
+        android:layout_marginStart="85dp"
+        android:layout_marginTop="96dp"
+        android:layout_marginEnd="200dp"
+        android:text="LOAD"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/method_spinner"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
