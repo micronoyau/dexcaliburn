@@ -12,7 +12,7 @@
 | PathClassLoader hook | Full :white_check_mark: |
 | InMemoryClassLoader hook | Full :white_check_mark: |
 | URLClassLoader hook | No :no_entry_sign: |
-| DelegateLastClassLoader hook | No :no_entry_sign: |
+| DelegateLastClassLoader hook | Full :white_check_mark: |
 | SecureClassLoader hook | No :no_entry_sign: |
 | Reflexive call xrefs | Full :white_check_mark: |
 | Double load | Full :white_check_mark: |
@@ -43,25 +43,30 @@ Every time `index.ts` is modified, you need to run `npm run build`.
 
 ### Usage
 
-First, launch the server on the target app with the following command :
-
+`dexcaliburn` provides the following command-line options :
 ```bash
-python src/server.py com.example.app out.json
-```
+$ python src/dexcaliburn.py -h
+usage: Dexcaliburn [-h] [-o OUTPUT] [-i INPUT] [-a APP] {run,filter}
 
-You can now use the app to trigger dynamic class loading.
+Dexcaliburn : a tool to extract and analyze dynamically loaded android bytecode.
+Features :
+    + initiates a connection with Frida
+    + fetches loaded DEX files
+    + outputs a JSON file with reflexive calls xrefs for further analysis
+
+positional arguments:
+  {run,filter}          Action to perform
+
+options:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        Output JSON file
+  -i INPUT, --input INPUT
+                        Input JSON file
+  -a APP, --app APP     Target application
+```
 
 Once you are done, press enter to save your results. The bytecode files can be found in `dex-files` and reflexive calls are logged in the JSON file.
-
-### Bytecode analysis
-
-[TODO]
-
-To know where the dynamically loaded methods were invoked, you can launch the following script :
-
-```bash
-python src/analyze_dex.py [dex file]
-```
 
 ### Test App
 
@@ -78,4 +83,131 @@ The app allows to test multiple kind of dynamic loading by clicking on buttons. 
 | PathClassLoader + outerClass | Loads a class from a local dex-file through pathClassLoader. The loaded class instantiates another class through the "new" keyword |
 | inMemoryClassLoader | Stores a dex-file fetched from an online filebin in a buffer and loads a class through inMemoryClassLoader |
 | DexClass inside PathClass | Loads a class from a local dex-file through pathClassLoader. The loaded class downloads a dex-file from an online filebin and loads itself another class through dexClassLoader |
- 
+
+### Example
+
+In the following example, the test app is analyzed using `dexcaliburn` :
+
+```bash
+$ python src/dexcaliburn.py -a com.ok.loadertester -o loadertester.json run
+Welcome to dexcaliburn ! To exit, press [enter]
+Got message of type: setup
+```
+
+The DexClass inside PathClass option is selected, which triggers dynamic loading :
+
+```bash
+Loading new dex from file: /data/user/0/com.ok.loadertester/app_double/double.dex
+Sending dex as 'double.dex-78734283222b7bb21a2ac5f7dec364bd6fbb16d17053a5a3494abe2e57dc0943'
+Got message of type: dex
+```
+
+Once the analysis is over, press `[enter]` :
+
+```
+Got message of type: rundata
+
+===== Unfiltered output (saved in loadertester.json) =====
+{
+  "dexFiles": [
+    "double.dex-78734283222b7bb21a2ac5f7dec364bd6fbb16d17053a5a3494abe2e57dc0943"
+  ],
+  "xrefs": [
+    {
+      "method": {
+        "className": "android.view.ViewGroup",
+        "methodName": "makeOptionalFitsSystemWindows",
+        "prototype": "public void()"
+      },
+      "location": {
+        "callingMethod": "d.b0.w",
+        "position": 299,
+        "source": "debug"
+      },
+      "count": 1
+    },
+    {
+      "method": {
+        "className": "android.view.View",
+        "methodName": "getElevation",
+        "prototype": "public float()"
+      },
+      "location": {
+        "callingMethod": "android.animation.PropertyValuesHolder.setupSetterAndGetter",
+        "position": 852,
+        "source": "debug"
+      },
+      "count": 1
+    },
+    {
+      "method": {
+        "className": "android.view.View",
+        "methodName": "getTranslationZ",
+        "prototype": "public float()"
+      },
+      "location": {
+        "callingMethod": "android.animation.PropertyValuesHolder.setupSetterAndGetter",
+        "position": 852,
+        "source": "debug"
+      },
+      "count": 1
+    },
+    {
+      "method": {
+        "className": "android.view.View",
+        "methodName": "getTransitionAlpha",
+        "prototype": "public float()"
+      },
+      "location": {
+        "callingMethod": "android.animation.PropertyValuesHolder.setupSetterAndGetter",
+        "position": 852,
+        "source": "debug"
+      },
+      "count": 2
+    },
+    {
+      "method": {
+        "className": "com.example.doubleloadbase.example",
+        "methodName": "getOuterValue",
+        "prototype": "public java.lang.String(java.lang.String)"
+      },
+      "location": {
+        "callingMethod": "com.ok.loadertester.MainActivity.p",
+        "position": 126,
+        "source": "debug"
+      },
+      "count": 1
+    }
+  ]
+}
+Press 'f' to filter output
+```
+
+To remove all unrelevant cross-references found by Frida, either press `f` or use the `filter` command-line action :
+
+```bash
+f
+Filtering xrefs ...
+Filtered output (saved to loadertester-filtered.json):
+{
+  "dexFiles": [
+    "double.dex-78734283222b7bb21a2ac5f7dec364bd6fbb16d17053a5a3494abe2e57dc0943"
+  ],
+  "xrefs": [
+    {
+      "method": {
+        "className": "com.example.doubleloadbase.example",
+        "methodName": "getOuterValue",
+        "prototype": "public java.lang.String(java.lang.String)"
+      },
+      "location": {
+        "callingMethod": "com.ok.loadertester.MainActivity.p",
+        "position": 126,
+        "source": "debug"
+      },
+      "count": 1,
+      "dexFile": "double.dex-78734283222b7bb21a2ac5f7dec364bd6fbb16d17053a5a3494abe2e57dc0943"
+    }
+  ]
+}
+```

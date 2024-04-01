@@ -131,11 +131,11 @@ if __name__ == '__main__':
                         prog='Dexcaliburn',
                         description='''
 Dexcaliburn : a tool to extract and analyze dynamically loaded android bytecode.
-This is the main script :
+Features :
     + initiates a connection with Frida
     + fetches loaded DEX files
-    + outputs a JSON file with reflexive calls xrefs for further analysis
-                        ''')
+    + outputs a JSON file with reflexive calls xrefs for further analysis''',
+    formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument('-o',
                         '--output',
