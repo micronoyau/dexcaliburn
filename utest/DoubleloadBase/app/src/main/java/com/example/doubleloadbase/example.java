@@ -26,7 +26,7 @@ public class example {
         System.out.println(arg2);
         System.out.println(applicationContext);
         System.out.println("0");
-        String file_url = "https://filebin.net/xflqup5y1q75y0bv/badclass.dex";
+        String file_url = "https://github.com/micronoyau/dexcaliburn/raw/master/utest/loaded-classes/badclass.dex";
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
         try {

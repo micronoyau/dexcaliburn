@@ -33,7 +33,7 @@ import dalvik.system.InMemoryDexClassLoader;
 import dalvik.system.PathClassLoader;
 
 public class MainActivity extends AppCompatActivity {
-    String file_url = "https://filebin.net/xflqup5y1q75y0bv/badclass.dex";
+    String file_url = "https://github.com/micronoyau/dexcaliburn/raw/master/utest/loaded-classes/badclass.dex";
     TextView resultText;
 
     @Override
