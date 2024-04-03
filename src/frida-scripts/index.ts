@@ -99,30 +99,36 @@ function captureInvokeCalls() {
 
   invoke.implementation = function(obj1: Object, obj2: Object[]) {
     log2("Invoked : " + this.getName());
-    let methodFull = this.toGenericString();
-    let stacktrace: string = Java.use("android.util.Log").getStackTraceString(Java.use("java.lang.Exception").$new());
-    let rawLocation = stacktrace.split('\n')[2];
 
-    let regexOrEmpty = (x: RegExpMatchArray | null) => {
-      let a = x?.[0];
-      return (a ? a : '')
-    };
+    const Method = Java.use('java.lang.reflect.Method');
+    const Class = Java.use('java.lang.Class');
+    const Thread = Java.use('java.lang.Thread');
+    const StackTraceElement = Java.use('java.lang.StackTraceElement');
 
-    // Parse method
-    let classAndMethod = regexOrEmpty(methodFull.match(/([^\s]*(?=\(.*\)))/));
+    // Reflexively-invoked method info
+    const methodClass = Method.getDeclaringClass.call(this);
+    const className = Class.getCanonicalName.call(methodClass);
+    const methodName = Method.getName.call(this);
+    const returnType = Method.getReturnType.call(this);
+    const returnTypeName = Class.getCanonicalName.call(returnType);
+    const parameterTypes = Method.getParameterTypes.call(this);
+
     let method = {
-      className: regexOrEmpty(classAndMethod.match(/.*(?=\.)/)),
-      methodName: regexOrEmpty(classAndMethod.match(/[^\.]*$/)),
-      prototype: regexOrEmpty(methodFull.match(/.*(?=\s)/)) + '(' + regexOrEmpty(methodFull.match(/(?<=\().*(?=\))/)) + ')'
+      className,
+      methodName,
+      prototype: returnTypeName + '(' +
+        parameterTypes.map((elem: any) => Class.getCanonicalName.call(elem)).join(', ')
+        + ')'
     }
 
-    // Parse raw location
-    let callingMethod = regexOrEmpty(rawLocation.match(/(?<=\tat\s).*(?=\()/));
-    let source = regexOrEmpty(rawLocation.match(/(?<=\().*(?=:)/)) === 'Unknown Source'
-      ? LocationSource.BINARY
-      : LocationSource.DEBUG;
-    let position_ = rawLocation.match(/(?<=:).*(?=\))/)?.[0];
-    let position = (position_ ? Number(position_) : 0);
+    // Calling method
+    const thread = Thread.currentThread.call(Thread);
+    const trace = Thread.getStackTrace.call(thread);
+    // 3 because interesting method -> invoke -> getStackTrace -> getThreadStackTrace
+    const callingMethod = StackTraceElement.getMethodName.call(trace[3]);
+    const position = StackTraceElement.getLineNumber.call(trace[3]);
+    const filename = StackTraceElement.getFileName.call(trace[3]);
+    const source = filename.match(/.*\.java/) ? LocationSource.DEBUG : LocationSource.BINARY;
 
     // JS does not allow tuple-indexed dictionaries, this is an non-optimal way around
     let xref_index = runData.xrefs.findIndex(xref =>
@@ -134,11 +140,11 @@ function captureInvokeCalls() {
       && (xref.location.source === source));
     if (xref_index == -1) {
       runData.xrefs.push({
-        method: method,
+        method,
         location: {
-          callingMethod: callingMethod,
-          position: position,
-          source: source
+          callingMethod,
+          position,
+          source
         },
         count: 1
       });
