@@ -3,6 +3,9 @@ name = "dexcaliburn"
 version = "0.1.0"
 description = "A tool to extract dynamically loaded bytecode"
 authors = [
+  "Mateo Dugas"
+  "Léo Durand--Kollner"
+  "Sharujan Mahalingasivam"
   "Jean-Marie Mineau <jean-marie.mineau@inria.fr>"
 ]
 readme = "README.md"
@@ -10,7 +13,7 @@ include = [ "dexcaliburn/frida-scripts/out/_script.js" ]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-androguard = "==4.0.2" # == because because we don't want the PyQt dep
+androguard = "==4.0.2" # == because we don't want the PyQt dep
 frida-tools = "^12.3.0"
 pysmali = "^0.2.3"
 
