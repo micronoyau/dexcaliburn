@@ -6,7 +6,7 @@
   "main": "scripts/index.ts",
   "scripts": {
     "prepare": "npm run build",
-    "build": "frida-compile index.ts -o out/_script.js -c",
+    "build": "mkdir -p out && frida-compile index.ts -o out/_script.js -c",
     "watch": "frida-compile index.ts -o out/_script.js -w"
   },
   "devDependencies": {

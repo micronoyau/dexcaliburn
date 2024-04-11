@@ -132,8 +132,6 @@ class Action(Enum):
 
 
 def main():
-    device = frida.get_usb_device()
-
     parser = argparse.ArgumentParser(
         prog="Dexcaliburn",
         description="""
@@ -155,6 +153,8 @@ Features :
     args = parser.parse_args()
 
     if args.action[0] == Action.RUN:
+        device = frida.get_usb_device()
+
         if not args.app or not args.output:
             print("You need to provide a target application and an output file")
             sys.exit(-1)
