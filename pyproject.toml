@@ -3,9 +3,9 @@ name = "dexcaliburn"
 version = "0.1.0"
 description = "A tool to extract dynamically loaded bytecode"
 authors = [
-  "Mateo Dugas"
-  "Léo Durand--Kollner"
-  "Sharujan Mahalingasivam"
+  "Mateo Dugas (neokaios)",
+  "Léo Durand--Kollner (micronoyau)",
+  "Sharujan Mahalingasivam (devilsharu)",
   "Jean-Marie Mineau <jean-marie.mineau@inria.fr>"
 ]
 readme = "README.md"

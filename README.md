@@ -21,25 +21,11 @@
 
 ### Installation & Build
 
-First, install Frida :
- + Locally : https://frida.re/docs/installation/ (`pip install frida-tools`)
- + On your Android device : https://frida.re/docs/android/
+`poetry` (https://python-poetry.org/docs/) is required to install the dependencies needed for `dexcaliburn`. :warning: Please do not install the dependencies by running `poetry install`. Instead, run the provided script located in `scripts/install.sh` to ensure the frida scripts are properly compiled.
 
-Then, install the following python requirements :
+Then, install `frida` on your Android device (https://frida.re/docs/android/).
 
-```bash
-pip install androguard pysmali
-```
-
-Build the Frida script:
-
-```bash
-cd src/frida-scripts
-npm install
-npm run build
-```
-
-Every time `index.ts` is modified, you need to run `npm run build`.
+If you customize the default Frida script located in `index.ts`, please run the script loced in `scripts/build.sh`.
 
 ### Usage
 

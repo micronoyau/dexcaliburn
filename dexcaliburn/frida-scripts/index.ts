@@ -24,8 +24,10 @@ let runData: {
     }
     location: {
       callingMethod: string,
+      callingClass: string,
       position: number,
-      source: LocationSource
+      source: LocationSource,
+      stacktrace: string[]
     },
     count: number
   }[]
@@ -126,9 +128,11 @@ function captureInvokeCalls() {
     const trace = Thread.getStackTrace.call(thread);
     // 3 because interesting method -> invoke -> getStackTrace -> getThreadStackTrace
     const callingMethod = StackTraceElement.getMethodName.call(trace[3]);
+    const callingClass = StackTraceElement.getClassName.call(trace[3]);
     const position = StackTraceElement.getLineNumber.call(trace[3]);
     const filename = StackTraceElement.getFileName.call(trace[3]);
     const source = filename.match(/.*\.java/) ? LocationSource.DEBUG : LocationSource.BINARY;
+    const stacktrace = trace.map((elem:any) => StackTraceElement.toString.call(elem));
 
     // JS does not allow tuple-indexed dictionaries, this is an non-optimal way around
     let xref_index = runData.xrefs.findIndex(xref =>
@@ -143,8 +147,10 @@ function captureInvokeCalls() {
         method,
         location: {
           callingMethod,
+          callingClass,
           position,
-          source
+          source,
+          stacktrace
         },
         count: 1
       });
