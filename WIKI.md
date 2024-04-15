@@ -8,12 +8,12 @@ The script does a few things at startup:
 
 1. Fetching the hooks config, see [below](#hooking-dynamically-loaded-method).
 
-    Communicate with the python serveur to initialize the `hookedMethods` array.
+    Communicate with the python server to initialize the `hookedMethods` array.
 
 2. Override loadClass for dynamic hooking
 
-    Setup hooks on `loadClass` method of commun ClassLoader to provide a way to hook method
-    not present in the JVM at the start. It uses the `hookdedMethods` array.
+    Setup hooks on the `loadClass` method of common ClassLoader to provide a way to hook method
+    not present in Dalvik at the start. It uses the `hookedMethods` array.
 
 3. Override ClassLoader init method
 
@@ -35,9 +35,8 @@ The first goal was to detect and retreive dex files that could be loaded at runt
 
 ### ClassLoader from file
 
-The simplest ClassLoader are `DexClassLoader` and `PathClassLoader`. They loaded new classes from a file on the filesystem.
+The simplest ClassLoader are `DexClassLoader` and `PathClassLoader`. They load new classes from a file on the filesystem.
 The goal is to retreive the content of such files.
-
 
 An example java code with such ClassLoader could look like this:
 ```java
@@ -91,13 +90,18 @@ Class<?> clz = inMemoryDexClassLoader.loadClass("exampleClass");
 
 The `memoryClassLoaderHookSetup()` is used to give the correct hook depending of the prototype of the constructor.
 
-
 ## Hooking dynamically loaded method
 
-- hooks.config
+One may want to hook method that come from a file loaded later in the execution (with a classLoader)
+This is not trivial as frida needs to wait for the method to be present in Dalvik before being able to find it with `Java.use()`.
 
+The user of this tools just need to provide the generic name of the method they want to hook in a `hooks.config`.
 
-## Some issue we encountered
+The usecase for this is the tracking of method called inside the dynamically loaded classes, and that are not called with `Method.invoke`.
+This can help monitor such call and understand the behaviour of the inspected code.
 
-### Android API level
+### Android API level issues
+
+Some classLoader hook do not work on some Android API level. This is due to the prototype of the method changing or being added later.
+For exemple, `dexcaliburn` do not detect calls to `DexClassLoader.init` and `PathClassLoader.init` on API level 26 but it works fine on API level 27.
 
