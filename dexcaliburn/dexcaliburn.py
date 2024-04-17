@@ -16,7 +16,6 @@ from .utils import *
 import json
 import argparse
 
-os.system(f"mkdir -p {DEX_FOLDER}")
 banner = "Welcome to dexcaliburn ! \
 To exit, press [enter]"
 
@@ -24,12 +23,12 @@ To exit, press [enter]"
 set_log("SUCCESS")
 
 
-def filter_xrefs(rundata):
+def filter_xrefs(rundata, dexdir):
     print("Filtering xrefs ...")
     xrefs = []
 
     for dex_filename in rundata["dexFiles"]:
-        dex_path = f"{DEX_FOLDER}/{dex_filename}"
+        dex_path = f"{dexdir}/{dex_filename}"
         hash, dex, analysis = AnalyzeDex(dex_path)
         getclassname = lambda m: m.class_name.replace("/", ".")[1:-1]
 
@@ -52,10 +51,10 @@ def filter_xrefs(rundata):
     return rundata
 
 
-def filter_xrefs_files(input, output):
+def filter_xrefs_files(input, output, dexdir):
     with open(input, "r") as f:
         with open(output, "w") as out:
-            rundata = filter_xrefs(json.loads(f.read()))
+            rundata = filter_xrefs(json.loads(f.read()), dexdir)
             rundata_filtered = dump_json(rundata)
             out.write(rundata_filtered)
             print(f"Filtered output (saved to {output}):")
@@ -69,22 +68,22 @@ def error_handler(message):
     print(message["stack"])
 
 
-def setup_handler(script):
+def setup_handler(script, hooks):
     """
     Send method names to be hooked once dynamically loaded
     """
     try:
-        f = open(HOOK_CONFIG_FILE, "r")
+        f = open(hooks, "r")
         script.post({"type": "hooks", "payload": f.read()})
     except:
         script.post({"type": "hooks", "payload": ""})
 
 
-def dex_handler(filename, data):
+def dex_handler(filename, data, dexdir):
     """
     Write [data] in [filename]
     """
-    with open(f"{DEX_FOLDER}/{filename}", "wb") as f:
+    with open(f"{dexdir}/{filename}", "wb") as f:
         f.write(data)
 
 
@@ -103,7 +102,7 @@ def rundata_handler(rundata, out):
     print("Press 'f' to filter output")
 
 
-def message_handler(message, data, args):
+def message_handler(message, data, script, args):
     """
     Parse messages from Frida and dispatches to matching handler
     """
@@ -116,9 +115,9 @@ def message_handler(message, data, args):
         printd(f"Got message of type: {id}\n")
 
         if id == "setup":
-            setup_handler(args["script"])
+            setup_handler(script, args.hooks)
         elif id == "dex":
-            dex_handler(payload["filename"], data)
+            dex_handler(payload["filename"], data, args.dexdir)
         elif id == "rundata":
             rundata_handler(payload["runData"], args["output"])
 
@@ -142,23 +141,23 @@ Features :
     + outputs a JSON file with reflexive calls xrefs for further analysis""",
         formatter_class=argparse.RawTextHelpFormatter,
     )
-
-    parser.add_argument("-o", "--output", help="Output JSON file")
+    DEX_DEFAULT_FOLDER = "dex-files"
+    HOOK_CONFIG_FILE_DEFAULT = "hook.config"
+    parser.add_argument("-o", "--output", required=True, help="Output JSON file")
+    parser.add_argument("-a", "--app", required=True, help="Target application")
     parser.add_argument("-i", "--input", help="Input JSON file")
-    parser.add_argument("-a", "--app", help="Target application")
-    parser.add_argument(
-        "action", choices=["run", "filter"], nargs=1, help="Action to perform"
-    )
+    parser.add_argument("-k", "--hooks", default=HOOK_CONFIG_FILE_DEFAULT, help="Dynamic hooks config file")
+    parser.add_argument("-d", "--dexdir", default=DEX_DEFAULT_FOLDER, help="Directory in which to store capture dex files")
+    parser.add_argument("action", choices=["run", "filter"], nargs=1, help="Action to perform")
 
     args = parser.parse_args()
 
     if args.action[0] == Action.RUN:
+
+        if args.dexdir == DEX_DEFAULT_FOLDER:
+            os.system(f"mkdir -p {DEX_DEFAULT_FOLDER}")
+
         device = frida.get_usb_device()
-
-        if not args.app or not args.output:
-            print("You need to provide a target application and an output file")
-            sys.exit(-1)
-
         pid = device.spawn([args.app])
         session = device.attach(pid)
 
@@ -173,7 +172,7 @@ Features :
         script.on(
             "message",
             lambda message, data: message_handler(
-                message, data, {"script": script, "output": args.output}
+                message, data, script, args
             ),
         )
         script.load()
@@ -190,7 +189,7 @@ Features :
                 panic("Parse error")
             ext_pos = ext_pos.start()
             filtered_name = args.output[:ext_pos] + "-filtered" + args.output[ext_pos:]
-            filter_xrefs_files(args.output, filtered_name)
+            filter_xrefs_files(args.output, filtered_name, args.dexdir)
 
         script.unload()
 
@@ -199,7 +198,7 @@ Features :
             print("You need to provide input and output files")
             sys.exit(-1)
 
-        filter_xrefs_files(args.input, args.output)
+        filter_xrefs_files(args.input, args.output, args.dexdir)
 
 
 if __name__ == "__main__":
