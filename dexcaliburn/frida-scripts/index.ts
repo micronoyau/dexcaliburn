@@ -210,9 +210,9 @@ function tryJavaUse(className: string) {
  */
 function memoryClassLoaderHookSetup(first_argument_is_array: boolean) {
   return function(init_method: Java.Method<{}>) {
-    log("Loading new dex from memory buffer");
-    let bufferArray = args[0];
     return function(this: any, ...args: any[]) {
+      log("Loading new dex from memory buffer");
+      let bufferArray = args[0];
       if (!first_argument_is_array) {
         bufferArray = [bufferArray]
       }
