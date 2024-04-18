@@ -58,6 +58,24 @@ export function sha256_fromJavaBuffer(buffer: any) {
   return toHexString(md.digest());
 }
 
+export function slowReadFile(input_file: string) {
+    // from dexcalibur
+    var fin = Java.use("java.io.FileInputStream").$new(input_file);
+    var content = [];
+    var b = null;
+    var jsBuffer = new Uint8Array(4096);
+    var buffer = Java.array('byte', Array.from(jsBuffer));
+    do {
+        b = fin.read(buffer);
+        if(b != -1) {
+            for(var i =0; i < b; i++) {
+                content.push(buffer[i]);
+            }
+        }
+    } while(b != -1);
+    return content;
+}
+
 export function sha256_fromFilePath(pathString: string) {
   return sha256_fromJavaBuffer(getJavaBufferFromPath(pathString));
 }

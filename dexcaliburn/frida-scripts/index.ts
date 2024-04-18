@@ -5,7 +5,7 @@
  * Should be run by server, or manually for debug purposes only.
  */
 
-import { getJSBufferFromJavaBuffer, getJavaBufferFromPath, log, log2, sha256_fromFilePath, sha256_fromJavaBuffer } from "./utils.js";
+import { getJSBufferFromJavaBuffer, getJavaBufferFromPath, log, log2, sha256_fromFilePath, sha256_fromJavaBuffer, slowReadFile } from "./utils.js";
 
 export const LOG_LEVEL = 1
 enum LocationSource {
@@ -240,9 +240,21 @@ function fileClassLoaderHook(init_method: Java.Method<{}>) {
   return function(this: any, ...args: any[]) {
     let dexPath = args[0];
     log("Loading new dex from file: " + dexPath);
-    let filename = dexPath.split('/').slice(-1)[0] + '-' + sha256_fromFilePath(dexPath);
+    var jsBuffer = [];
+    var filename = "";
+    try {
+      const javaBuffer = getJavaBufferFromPath(dexPath);
+      jsBuffer = getJSBufferFromJavaBuffer(javaBuffer)
+      filename = dexPath.split('/').slice(-1)[0] + '-' + sha256_fromJavaBuffer(javaBuffer);
+    }
+    catch (e) {
+      log("Fast file copy failed")
+      log("Switching to slow file copy, this may take a while...")
+      jsBuffer = slowReadFile(dexPath)
+      filename = dexPath.split('/').slice(-1)[0];
+    }
     log(`Sending dex as '${filename}'`)
-    send({ id: "dex", filename: filename }, getJSBufferFromJavaBuffer(getJavaBufferFromPath(dexPath)))
+    send({ id: "dex", filename: filename }, jsBuffer)
     runData.dexFiles.push(filename);
     return init_method.call(this, ...args);
   }
