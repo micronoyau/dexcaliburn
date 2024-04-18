@@ -58,7 +58,7 @@ export function sha256_fromJavaBuffer(buffer: any) {
   return toHexString(md.digest());
 }
 
-export function slowReadFile(input_file: string){
+export function slowReadFile(input_file: string) {
     // from dexcalibur
     var fin = Java.use("java.io.FileInputStream").$new(input_file);
     var content = [];

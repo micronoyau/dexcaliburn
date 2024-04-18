@@ -132,7 +132,7 @@ function captureInvokeCalls() {
     const position = StackTraceElement.getLineNumber.call(trace[3]);
     const filename = StackTraceElement.getFileName.call(trace[3]);
     const source = filename.match(/.*\.java/) ? LocationSource.DEBUG : LocationSource.BINARY;
-    const stacktrace = trace.map((elem:any) => StackTraceElement.toString.call(elem));
+    const stacktrace = trace.map((elem: any) => StackTraceElement.toString.call(elem));
 
     // JS does not allow tuple-indexed dictionaries, this is an non-optimal way around
     let xref_index = runData.xrefs.findIndex(xref =>
@@ -210,9 +210,9 @@ function tryJavaUse(className: string) {
  */
 function memoryClassLoaderHookSetup(first_argument_is_array: boolean) {
   return function(init_method: Java.Method<{}>) {
+    log("Loading new dex from memory buffer");
+    let bufferArray = args[0];
     return function(this: any, ...args: any[]) {
-      log("Loading new dex from memory buffer");
-      let bufferArray = args[0];
       if (!first_argument_is_array) {
         bufferArray = [bufferArray]
       }
@@ -236,17 +236,20 @@ function fileClassLoaderHook(init_method: Java.Method<{}>) {
   return function(this: any, ...args: any[]) {
     let dexPath = args[0];
     log("Loading new dex from file: " + dexPath);
-    let filename = dexPath.split('/').slice(-1)[0] + '-' + sha256_fromFilePath(dexPath);
-    log(`Sending dex as '${filename}'`)
     var jsBuffer = [];
+    var filename = "";
     try {
-      jsBuffer = getJSBufferFromJavaBuffer(getJavaBufferFromPath(dexPath))
+      const javaBuffer = getJavaBufferFromPath(dexPath);
+      jsBuffer = getJSBufferFromJavaBuffer(javaBuffer)
+      filename = dexPath.split('/').slice(-1)[0] + '-' + sha256_fromJavaBuffer(javaBuffer);
     }
     catch (e) {
       log("Fast file copy failed")
       log("Switching to slow file copy, this may take a while...")
       jsBuffer = slowReadFile(dexPath)
+      filename = dexPath.split('/').slice(-1)[0];
     }
+    log(`Sending dex as '${filename}'`)
     send({ id: "dex", filename: filename }, jsBuffer)
     runData.dexFiles.push(filename);
     return init_method.call(this, ...args);
