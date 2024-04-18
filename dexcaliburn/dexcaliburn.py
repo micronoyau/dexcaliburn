@@ -119,7 +119,7 @@ def message_handler(message, data, script, args):
         elif id == "dex":
             dex_handler(payload["filename"], data, args.dexdir)
         elif id == "rundata":
-            rundata_handler(payload["runData"], args["output"])
+            rundata_handler(payload["runData"], args.output)
 
 
 class Action(Enum):

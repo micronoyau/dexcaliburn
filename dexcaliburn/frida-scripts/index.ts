@@ -73,8 +73,12 @@ function setupExitHandler() {
 }
 
 function overrideloadClassForDynHooking() {
-  for (let classLoaderName of ['InMemoryDexClassLoader', 'DexClassLoader', 'PathClassLoader', 'DelegateLastClassLoader']) {
-    const classLoader = tryJavaUse('dalvik.system.' + classLoaderName);
+  for (let classLoaderName of ['dalvik.system.InMemoryDexClassLoader',
+    'dalvik.system.DexClassLoader',
+    'dalvik.system.PathClassLoader',
+    'dalvik.system.DelegateLastClassLoader',
+    'java.lang.ClassLoader']) {
+    const classLoader = tryJavaUse(classLoaderName);
     if (!classLoader) continue;
     tryOverride(() => {
       const loadClass = classLoader.loadClass.overload('java.lang.String');
@@ -131,8 +135,8 @@ function captureInvokeCalls() {
     const callingClass = StackTraceElement.getClassName.call(trace[3]);
     const position = StackTraceElement.getLineNumber.call(trace[3]);
     const filename = StackTraceElement.getFileName.call(trace[3]);
-    const source = filename.match(/.*\.java/) ? LocationSource.DEBUG : LocationSource.BINARY;
-    const stacktrace = trace.map((elem:any) => StackTraceElement.toString.call(elem));
+    const source = filename ? (filename.match(/.*\.java/) ? LocationSource.DEBUG : LocationSource.BINARY) : LocationSource.BINARY;
+    const stacktrace = trace.map((elem: any) => StackTraceElement.toString.call(elem));
 
     // JS does not allow tuple-indexed dictionaries, this is an non-optimal way around
     let xref_index = runData.xrefs.findIndex(xref =>
